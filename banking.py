@@ -121,6 +121,9 @@ class Card:
                 print("\nBye!")
                 conn.close()
                 sys.exit()
+            # 0~5 사이의 입력값이 주어지지 않을 경우 예외처리
+            else:
+                print("\n0에서 5사이의 숫자를 입력해주세요")
 
     # 룬2 : 카드번호의 유효성. 이 검사를 통과할 시 true, 못하면 false
     def luhn_2(self, num): #Luhn 알고리즘을 사용해 카드번호가 유효한지 판단
