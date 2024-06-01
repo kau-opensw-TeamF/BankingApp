@@ -24,13 +24,42 @@ class Card:
         self.balance = 0
         self.receiver_balance = 0
         
+        self.language = 'en'
+        self.messages = {
+            'en': {
+                'welcome': "\n1. Create an account\n2. Log into account\n0. Exit",
+                'menu': "\n1. Balance\n2. Add income\n3. Do transfer\n4. Close account\n5. Log out\n0. Exit",
+                'create_card': "Your card has been created\nYour card number:",
+                'create_pin': "Your card PIN:",
+                'enter_card': "Enter your card number:",
+                'enter_pin': "Enter your PIN:",
+                'login_success': "\nYou have successfully logged in",
+                'login_failure': "Wrong card number or PIN",
+                'balance': '\nBalance: ',
+                'enter_income': '\nEnter income:',
+                'income_added': 'Income was added!',
+                'transfer': '\nTransfer\nEnter card number:',
+                'mistake_card_number': 'Probably you made a mistake in the card number. Please try again!',
+                'no_card': 'Such a card does not exist.',
+                'enter_transfer_amount': "Enter how much money you want to transfer:\n",
+                'not_enough_money': "Not enough money!",
+                'transfer_success': "Success!",
+                'account_closed': '\nThe account has been closed!',
+                'logout_success': "\nYou have successfully logg out!",
+                'bye': "\nBye!",
+                'invalid_input': "Invalid input",
+            }
+        }
+
+    def translate(self, message):
+        return self.messages[self.language][message]
+        
     def create_account(self): #카드번호 생성
-        print("Your card has been created")
-        print("Your card number:")
+        print(self.translate('create_card'))
         # 랜덤한 카드 번호 생성
         self.card = '400000' + str(random.randint(100000000, 999999999)) 
         print(self.luhn()) #luhn을 통해 검증가능한 유효 카드번호 반환
-        print("Your card PIN:")
+        print(self.translate('create_pin'))
         self.pin = str(random.randint(1000, 9999)) #랜덤한 pin번호 생성
         print(self.pin)
         # 생성된 계정 정보를 데이터베이스에 삽입
@@ -39,8 +68,8 @@ class Card:
         
     def log_in(self): #카드번호와 PIN을 받아서 sql문으로 검색, 검색된 경우 sucess문으로 넘어감
 
-        self.login_card = input("Enter your card number:\n")
-        self.login_pin = input("Enter your PIN:\n")
+        self.login_card = input(self.translate('enter_card') + "\n")
+        self.login_pin = input(self.translate('enter_card') + "\n")
 
         cur.execute(f"""SELECT
                             id,
@@ -57,48 +86,43 @@ class Card:
         self.row = cur.fetchone() #만약 cur에 입력받은게 있으면 그 값을 가져오고, 없다면 NULL을 가져옴
         if self.row: #계정 존재시 로그인 성공
             self.balance = self.row[3] #db의 네번째 요소인 balance(id, number, pin, balance 중 balance)를 이 instance의 balance에 넣음.
-            print('\nYou have successfully logged in')
+            print(self.translate('login_success'))
             self.success() #로그인 성공시 메뉴
 
         else:
-            print("wrong card number or pin")
+            print(self.translate('login_failure'))
 
         '''elif not self.luhn_2(self.login_card):
             print('Probably you made a mistake in the card number. Please try again!')'''
             
     def success(self): #1.자산확인 2.입금기능 3.송금기능 4.계좌폐쇄 5.로그아웃 0.종료
         while True: #입력받은 숫자에 따라 기능 실행
-            print("""\n1. Balance
-2. Add income
-3. Do transfer
-4. Close account
-5. Log out
-0. Exit""")
+            print(self.translate('menu'))
             i = int(input())
             if i == 1: #자산확인
-                print('\nBalance: ', self.balance) #현재 내 자산 출력
+                print(self.translate('balance'), self.balance) #현재 내 자산 출력
                 print()
             elif i == 2: #입금기능
-                print('\nEnter income:')
+                print(self.translate('enter_income'))
                 amount = int(input())
                 self.balance += amount #기존잔고 + 입금액
                 # 잔액 업데이트 및 입금 내역 데이터베이스에 기록
                 cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
                 conn.commit() #DB저장
-                print('Income was added!')
+                print(self.translate('income_added'))
             elif i == 3: #송금기능
-                print('\nTransfer\nEnter card number:')
+                print(self.translate('transfer'))
                 receiver_card = input() #돈을 보낼 카드번호를 입력받고 db에 receiver_card에 저장.
                 cur.execute(f'SELECT id, number,pin,balance FROM card WHERE number = {receiver_card};')
 
                 if not self.luhn_2(receiver_card): #룬2에서 반환받은 값이 false라면
-                    print('Probably you made a mistake in the card number. Please try again!')
+                    print(self.translate('mistake_card_number'))
                 elif not cur.fetchone(): #카드번호 자체가 없을시
-                    print('Such a card does not exist.')
+                    print(self.translate('no_card'))
                 else:
-                    transfer = int(input("Enter how much money you want to transfer:\n")) #송금액 입력
+                    transfer = int(input(self.translate('enter_transfer_amount'))) #송금액 입력
                     if transfer > self.balance:
-                        print("Not enough money!") #송금액이 자산총액보다 많을 경우
+                        print(self.translate('not_enough_money')) #송금액이 자산총액보다 많을 경우
                     else: #계좌에서 실제로 이체
                         self.balance -= transfer #송금자 자산총액에서 송금액 제외. DB에 업데이트
                         cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
@@ -106,19 +130,19 @@ class Card:
                         cur.execute(f'UPDATE card SET balance = {self.receiver_balance} WHERE number = {receiver_card};')
                         cur.execute(f'SELECT * FROM card WHERE number = {self.login_card}') #송금자 카드번호를 기반으로 DB내 모든 정보 조회
                         print(cur.fetchone())
-                        print("Success!")
+                        print(self.translate('transfer_success'))
                         conn.commit()
 
             elif i == 4: #계좌폐쇄
                 cur.execute(f"DELETE FROM card WHERE number = {self.login_card}") #sql문으로 해당 카드와 관련된 DB내 모든 정보 삭제
                 conn.commit()
-                print('\nThe account has been closed!')
+                print(self.translate('account_closed'))
                 break
             elif i == 5: #로그아웃
-                print("\nYou have successfully log out!")
+                print(self.translate('logout_success'))
                 break
             elif i == 0: #종료
-                print("\nBye!")
+                print(self.translate('bye'))
                 conn.close()
                 sys.exit()
 
@@ -171,9 +195,7 @@ class Card:
         
     def menu(self): #메뉴 표시 메소드 1.계좌생성 2.로그인 0.종료
         while True:
-            print("""\n1. Create an account
-2. Log into account
-0. Exit""")
+            print(self.translate('welcome'))
             i = int(input())
             if i == 1:
                 self.create_account()
@@ -181,10 +203,10 @@ class Card:
                 self.log_in()
             elif i == 0:
                 conn.close()
-                print("\nBye!")
+                print(self.translate('bye'))
                 break
             else:
-                print("Invalid input")
+                print(self.translate('invalid_input'))
                 
 #instance 생성 후 menu 메소드 실행
 card = Card()
