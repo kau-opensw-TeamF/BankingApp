@@ -38,11 +38,13 @@ class Card:
         conn.commit() # 저장
         
     def log_in(self): #카드번호와 PIN을 받아서 sql문으로 검색, 검색된 경우 sucess문으로 넘어감
-
-        self.login_card = input("Enter your card number:\n")
-        self.login_pin = input("Enter your PIN:\n")
-
-        cur.execute(f"""SELECT
+        login_attempts = 0  # 로그인 시도 횟수 초기화
+    
+        while login_attempts < 5:
+            self.login_card = input("Enter your card number:\n")
+            self.login_pin = input("Enter your PIN:\n")
+        
+            cur.execute(f"""SELECT
                             id,
                             number,
                             pin,
@@ -54,17 +56,20 @@ class Card:
                             AND pin = {self.login_pin}
                         ;""") #입력받은 정보를 통해 sql문으로 db조회
 
-        self.row = cur.fetchone() #만약 cur에 입력받은게 있으면 그 값을 가져오고, 없다면 NULL을 가져옴
-        if self.row: #계정 존재시 로그인 성공
-            self.balance = self.row[3] #db의 네번째 요소인 balance(id, number, pin, balance 중 balance)를 이 instance의 balance에 넣음.
-            print('\nYou have successfully logged in')
-            self.success() #로그인 성공시 메뉴
+            self.row = cur.fetchone() #만약 cur에 입력받은게 있으면 그 값을 가져오고, 없다면 NULL을 가져옴
+            if self.row: #계정 존재시 로그인 성공
+                self.balance = self.row[3] #db의 네번째 요소인 balance(id, number, pin, balance 중 balance)를 이 instance의 balance에 넣음.
+                print('\nYou have successfully logged in')
+                self.success() #로그인 성공시 메뉴
+                return
 
-        else:
-            print("wrong card number or pin")
-
-        '''elif not self.luhn_2(self.login_card):
-            print('Probably you made a mistake in the card number. Please try again!')'''
+            else:
+                login_attempts += 1 
+                print("Wrong card number or PIN")
+                if login_attempts >= 5: #로그인 실패 횟수가 5번이 넘어가면 종료, 악의적 로그인 시도의 차단.
+                    print("Too many failed login attempts. program will exit.")
+                    conn.close()
+                    sys.exit() 
             
     def success(self): #1.자산확인 2.입금기능 3.송금기능 4.계좌폐쇄 5.로그아웃 0.종료
         while True: #입력받은 숫자에 따라 기능 실행
