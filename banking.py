@@ -17,7 +17,10 @@ conn.commit() #DB에 결과 저장
 
 class Card:
 
-    def __init__(self): #생성자 card의 instance attribute : card, pin, login_card, login_pin, row, balance, receiver_balance 값 초기화
+    def __init__(self, root): #생성자 card의 instance attribute : card, pin, login_card, login_pin, row, balance, receiver_balance 값 초기화
+        self.root = root
+        self.root.title("OpenSourceSW Team F")
+        self.root.geometry("1600x900")
         self.card = ''
         self.pin = ''
         self.login_card = ''
@@ -26,15 +29,46 @@ class Card:
         self.balance = 0
         self.receiver_balance = 0
         
-    def create_account(self): #카드번호 생성
-        print("Your card has been created")
-        print("Your card number:")
+        
+        # 실행부분을 init으로 옮겨야 함. main에서 실행할 수 없음.
+        self.main_window()
+        
+        
+    def destroy_window(self):
+        for kidwin in self.root.winfo_children():
+            kidwin.destory()
+    
+    def main_window(self): #제일 초기 화면을 보여주는 코드.
+        self.destroy_window()
+        tk.Label(self.root, text = "초기 화면").pack(pady = 20)
+        tk.Button(self.root,text="1.create account",command = self.create_account).pack(pady=5)
+
+    
+    def show_account(self,account,pin):
+        label_account = tk.Label(root,text="여기")
+        label_account.pack(pady=10)
+        label_pin = tk.Label(root,text="저기")
+        label_pin.pack(pady=10)
+        label_account.config(text =f"Account : {account}")
+        label_pin.config(text =f"pin: {pin}")
+        
+        
+        
+    
+    
+    def create_account(self): #카드번호 생성 # 새로운 창을 열기? 그냥 아래에다가 보여주기? 
+        
+        #print("Your card has been created") 여기있는 콘솔 프린트 말고 gui에 출력해야함.
+        #print("Your card number:")
         # 랜덤한 카드 번호 생성
-        self.card = '400000' + str(random.randint(100000000, 999999999)) 
-        print(self.luhn()) #luhn을 통해 검증가능한 유효 카드번호 반환
-        print("Your card PIN:")
+        self.card = '400000' + str(random.randint(100000000, 999999999))
+        new_account = self.luhn()
+        #print(self.luhn()) #luhn을 통해 검증가능한 유효 카드번호 반환
+        #print("Your card PIN:")
         self.pin = str(random.randint(1000, 9999)) #랜덤한 pin번호 생성
-        print(self.pin)
+        
+        self.show_account(new_account,self.pin)
+        #print(self.pin)
         # 생성된 계정 정보를 데이터베이스에 삽입
         cur.execute(f"""INSERT INTO card (number, pin) VALUES ({self.card}, {self.pin});""") #DB에 카드, pin 정보 추가
         conn.commit() # 저장
@@ -187,7 +221,13 @@ class Card:
                 break
             else:
                 print("Invalid input")
-                
+
+
+
+
 #instance 생성 후 menu 메소드 실행
-card = Card()
-card.menu()
+
+root = tk.Tk()
+card = Card(root)
+root.mainloop()
+#card.menu()
