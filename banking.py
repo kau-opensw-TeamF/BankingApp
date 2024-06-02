@@ -20,7 +20,7 @@ class Card:
     def __init__(self, root): #생성자 card의 instance attribute : card, pin, login_card, login_pin, row, balance, receiver_balance 값 초기화
         self.root = root
         self.root.title("OpenSourceSW Team F")
-        self.root.geometry("1600x900")
+        self.root.geometry("400x900")
         self.card = ''
         self.pin = ''
         self.login_card = ''
@@ -34,7 +34,7 @@ class Card:
         self.main_window()
         
         
-    def destroy_window(self):
+    def destroy_window(self): # gui 에서 화면을 지우는 코드.
         for kidwin in self.root.winfo_children():
             kidwin.destory()
     
@@ -42,20 +42,18 @@ class Card:
         self.destroy_window()
         tk.Label(self.root, text = "초기 화면").pack(pady = 20)
         tk.Button(self.root,text="1.create account",command = self.create_account).pack(pady=5)
-
+        tk.Button(self.root,text="2.log in",command=self.log_in).pack(pady=2)
     
     def show_account(self,account,pin):
         label_account = tk.Label(root,text="여기")
-        label_account.pack(pady=10)
+        label_account.pack(pady=2)
         label_pin = tk.Label(root,text="저기")
-        label_pin.pack(pady=10)
+        label_pin.pack(pady=3)
         label_account.config(text =f"Account : {account}")
         label_pin.config(text =f"pin: {pin}")
         
         
-        
-    
-    
+
     def create_account(self): #카드번호 생성 # 새로운 창을 열기? 그냥 아래에다가 보여주기? 
         
         #print("Your card has been created") 여기있는 콘솔 프린트 말고 gui에 출력해야함.
@@ -74,10 +72,26 @@ class Card:
         conn.commit() # 저장
         
     def log_in(self): #카드번호와 PIN을 받아서 sql문으로 검색, 검색된 경우 sucess문으로 넘어감
-
-        self.login_card = input("Enter your card number:\n")
-        self.login_pin = input("Enter your PIN:\n")
-
+        
+        #self.login_card = input("Enter your card number:\n")
+        #self.login_pin = input("Enter your PIN:\n")
+        login_win = tk.Toplevel(self.root)
+        login_win.title("Log In")
+        login_win.geometry("350x200")
+        
+        tk.Label(login_win, text="Enter your card number:").pack(pady=5)
+        self.card_input = tk.Entry(login_win,width=20)
+        self.card_input.pack(pady=5)
+        tk.Label(login_win, text="Enter your pin number:").pack(pady=5)
+        self.pin_input = tk.Entry(login_win,width=20)
+        self.pin_input.pack(pady=5) 
+        tk.Button(login_win,text="Log In",command=self.check_login).pack(pady=10)
+        
+        
+        
+    def check_login(self):
+        self.login_card = self.card_input.get()
+        self.login_pin = self.pin_input.get()
         cur.execute(f"""SELECT
                             id,
                             number,
@@ -89,11 +103,12 @@ class Card:
                             number = {self.login_card}
                             AND pin = {self.login_pin}
                         ;""") #입력받은 정보를 통해 sql문으로 db조회
-
+        
         self.row = cur.fetchone() #만약 cur에 입력받은게 있으면 그 값을 가져오고, 없다면 NULL을 가져옴
         if self.row: #계정 존재시 로그인 성공
             self.balance = self.row[3] #db의 네번째 요소인 balance(id, number, pin, balance 중 balance)를 이 instance의 balance에 넣음.
             print('\nYou have successfully logged in')
+            #self.login_win.destroy()
             self.success() #로그인 성공시 메뉴
 
         else:
@@ -101,8 +116,11 @@ class Card:
 
         '''elif not self.luhn_2(self.login_card):
             print('Probably you made a mistake in the card number. Please try again!')'''
-            
+
+                
     def success(self): #1.자산확인 2.입금기능 3.송금기능 4.계좌폐쇄 5.로그아웃 0.종료
+        #self.destroy_window()
+        
         while True: #입력받은 숫자에 따라 기능 실행
             print("""\n1. Balance
 2. Add income
