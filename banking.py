@@ -127,6 +127,7 @@ class Card:
         myaccount.geometry("400x900")
         tk.Button(myaccount,text="1. Balance",command=lambda:self.mybalance(myaccount)).pack(pady=10)
         tk.Button(myaccount,text="2. Add income",command=lambda:self.addincome(myaccount)).pack(pady=10)
+        tk.Button(myaccount,text="3. Do transfer",command=lambda:self.transfer(myaccount)).pack(pady=10)
         while True: #입력받은 숫자에 따라 기능 실행
             print("""\n1. Balance
 2. Add income
@@ -182,7 +183,47 @@ class Card:
                 conn.close()
                 sys.exit()
 
-    
+    def transfermethod(self,myaccount,receivecard):
+        try:
+            self.receiver_card = str(receivecard.get())
+            cur.execute(f'SELECT id, number,pin,balance FROM card WHERE number = {self.receiver_card};')
+            if not self.luhn_2(self.receiver_card): #룬2에서 반환받은 값이 false라면
+                messagebox.showerror("error:numbermistake",'Probably you made a mistake in the card number. Please try again!')
+            elif not cur.fetchone(): #카드번호 자체가 없을시
+                messagebox.showerror("error:numbernull",'Such a card does not exist.')
+            else:
+                tfwin = tk.Toplevel(myaccount)
+                tfwin.geometry("300x450")
+                label = tk.Label(tfwin,text="Enter how much money you want to transfer").pack()
+                tfmoney = tk.Entry(tfwin,width=20)
+                tfmoney.pack(pady=10)
+                tk.Button(tfwin,text="Enter",command=lambda:self.tfmoneycheck(tfmoney)).pack()
+        except ValueError:
+            messagebox.showerror("error","error")
+        
+    def tfmoneycheck(self,tfmoney):
+        try:
+            tfmoney = int(tfmoney.get())
+            if tfmoney > self.balance:
+                messagebox.showerror("Error","Not Enough Money!")
+            else:
+                self.balance -= tfmoney #송금자 자산총액에서 송금액 제외. DB에 업데이트
+                cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
+                self.receiver_balance += tfmoney #수금자 자산총액에서 송금액 추가. DB에 업데이트
+                cur.execute(f'UPDATE card SET balance = {self.receiver_balance} WHERE number = {self.receiver_card};')
+                cur.execute(f'SELECT * FROM card WHERE number = {self.login_card}') #송금자 카드번호를 기반으로 DB내 모든 정보 조회
+                messagebox.showinfo("info",f"success! money : {cur.fetchone()}\n My balance : {self.balance}")
+                conn.commit()
+        except ValueError:
+            messagebox.showerror("Error","Invalid integer input")
+        
+    def transfer(self,myaccount):
+        #로직 : receiver_card 번호 입력받고,  송금액 입력받고, 실제로 구현해서 보여주기. 내 계좌 변동도 보여주기.
+        label = tk.Label(myaccount,text="Transfer Enter Card Number").pack(pady=5)
+        receivecard = tk.Entry(myaccount,width=20)
+        receivecard.pack(pady=10)
+        tk.Button(myaccount,text="Enter",command=lambda:self.transfermethod(myaccount,receivecard)).pack()
+        
     def mybalance(self, myaccount):
         if not hasattr(self, 'balance_label'):
             self.balance_label = tk.Label(myaccount, text=f"Balance: {self.balance}", width=20)
@@ -195,6 +236,8 @@ class Card:
         try:
             income = int(add.get())
             self.balance += income
+            cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
+            conn.commit() #DB저장
             messagebox.showinfo("Info",f"Income has been added! your balance : {self.balance}")
             self.balance_label.config(text=f"Balance: {self.balance}")
         except ValueError:
