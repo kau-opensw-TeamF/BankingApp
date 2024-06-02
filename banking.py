@@ -169,16 +169,51 @@ class Card:
         
         return self.card
         
+    def admin_menu(self): #관리자 기능 메소드 1.전체 계좌 목록 조회 2.특정 계좌 삭제 0.관리자 기능 종료
+        
+        admin_password = 1000 #비밀번호는 1000
+        input_password = int(input("password: "))
+        
+        while (admin_password == input_password): 
+            print("""\nAdmin Menu
+1. View all accounts
+2. Delete an account
+0. Back to main menu""")
+            i = int(input())
+            if i == 1:  # 전체 계좌 목록 조회
+                cur.execute("SELECT id, number, pin, balance FROM card;")
+                accounts = cur.fetchall()
+                print("\nAll Accounts:")
+                for account in accounts:
+                    print(f"ID: {account[0]}, Number: {account[1]}, PIN: {account[2]}, Balance: {account[3]}")
+            elif i == 2:  # 특정 계정 삭제
+                print('\nEnter card number to delete:')
+                delete_card = input()
+                cur.execute(f"SELECT * FROM card WHERE number = {delete_card};")
+                if cur.fetchone():
+                    cur.execute(f"DELETE FROM card WHERE number = {delete_card}")
+                    conn.commit()
+                    print("The account has been deleted!")
+                else:
+                    print("Such a card does not exist.")
+            elif i == 0: # 관리자 기능 종료
+                break
+            else:
+                print("Invalid input")
+        
     def menu(self): #메뉴 표시 메소드 1.계좌생성 2.로그인 0.종료
         while True:
             print("""\n1. Create an account
 2. Log into account
+3. Adimin menu 
 0. Exit""")
             i = int(input())
             if i == 1:
                 self.create_account()
             elif i == 2:
                 self.log_in()
+            elif i == 3:
+                self.admin_menu()
             elif i == 0:
                 conn.close()
                 print("\nBye!")
@@ -186,6 +221,7 @@ class Card:
             else:
                 print("Invalid input")
                 
+
 #instance 생성 후 menu 메소드 실행
 card = Card()
 card.menu()
