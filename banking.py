@@ -2,6 +2,8 @@
 import random
 import sys
 import sqlite3
+import tkinter as tk
+
 random.seed()
 
 #sqlite3 DB
