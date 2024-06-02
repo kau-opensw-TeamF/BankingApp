@@ -27,8 +27,8 @@ class Card:
         self.language = 'en'
         self.messages = {
             'en': {
-                'welcome': "\n1. Create an account\n2. Log into account\n0. Exit",
-                'menu': "\n1. Balance\n2. Add income\n3. Do transfer\n4. Close account\n5. Log out\n0. Exit",
+                'welcome': "\n1. Create an account\n2. Log into account\n9. Switch Language\n0. Exit",
+                'menu': "\n1. Balance\n2. Add income\n3. Do transfer\n4. Close account\n5. Log out\n9. Switch Language\n0. Exit",
                 'create_card': "Your card has been created\nYour card number:",
                 'create_pin': "Your card PIN:",
                 'enter_card': "Enter your card number:",
@@ -48,6 +48,29 @@ class Card:
                 'logout_success': "\nYou have successfully logg out!",
                 'bye': "\nBye!",
                 'invalid_input': "Invalid input",
+            },
+            'ko': {
+                'welcome': "\n1. 계좌 생성\n2. 로그인\n9. 영한 변환\n0. 종료",
+                'menu': "\n1. 잔액 확인\n2. 수입 추가\n3. 이체\n4. 계좌 폐쇄\n5. 로그아웃\n9. 영한 변환\n0. 종료",
+                'create_card': "카드가 생성되었습니다\n카드 번호:",
+                'create_pin': "카드 PIN:",
+                'enter_card': "카드 번호를 입력하세요:",
+                'enter_pin': "PIN을 입력하세요:",
+                'login_success': "\n성공적으로 로그인했습니다",
+                'login_failure': "잘못된 카드 번호 또는 PIN",
+                'balance': '\n잔액: ',
+                'enter_income': '\n수입을 입력하세요:',
+                'income_added': '수입이 추가되었습니다!',
+                'transfer': '\n이체\n카드 번호를 입력하세요:',
+                'mistake_card_number': '카드 번호에 실수가 있는 것 같습니다. 다시 시도하세요!',
+                'no_card': '존재하지 않는 카드입니다.',
+                'enter_transfer_amount': "이체할 금액을 입력하세요:\n",
+                'not_enough_money': "잔액이 부족합니다!",
+                'transfer_success': "성공!",
+                'account_closed': '\n계좌가 폐쇄되었습니다!',
+                'logout_success': "\n성공적으로 로그아웃했습니다!",
+                'bye': "\n안녕!",
+                'invalid_input': "잘못된 입력",
             }
         }
 
@@ -141,11 +164,17 @@ class Card:
             elif i == 5: #로그아웃
                 print(self.translate('logout_success'))
                 break
+            elif i == 9: #영한변환
+                self.switch_language()
             elif i == 0: #종료
                 print(self.translate('bye'))
                 conn.close()
                 sys.exit()
 
+    #en기본언어 ko변경 감지시 switch
+    def switch_language(self):
+        self.language = 'ko' if self.language == 'en' else 'en'
+        
     # 룬2 : 카드번호의 유효성. 이 검사를 통과할 시 true, 못하면 false
     def luhn_2(self, num): #Luhn 알고리즘을 사용해 카드번호가 유효한지 판단
         num2 = num[:]
@@ -193,7 +222,7 @@ class Card:
         
         return self.card
         
-    def menu(self): #메뉴 표시 메소드 1.계좌생성 2.로그인 0.종료
+    def menu(self): #메뉴 표시 메소드 1.계좌생성 2.로그인 9.영한변환 0.종료
         while True:
             print(self.translate('welcome'))
             i = int(input())
@@ -201,6 +230,8 @@ class Card:
                 self.create_account()
             elif i == 2:
                 self.log_in()
+            elif i == 9:
+                self.switch_language()
             elif i == 0:
                 conn.close()
                 print(self.translate('bye'))
