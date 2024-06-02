@@ -3,7 +3,7 @@ import random
 import sys
 import sqlite3
 import tkinter as tk
-
+from tkinter import messagebox
 random.seed()
 
 #sqlite3 DB
@@ -36,7 +36,7 @@ class Card:
         
     def destroy_window(self): # gui 에서 화면을 지우는 코드.
         for kidwin in self.root.winfo_children():
-            kidwin.destory()
+            kidwin.destroy()
     
     def main_window(self): #제일 초기 화면을 보여주는 코드.
         self.destroy_window()
@@ -85,11 +85,11 @@ class Card:
         tk.Label(login_win, text="Enter your pin number:").pack(pady=5)
         self.pin_input = tk.Entry(login_win,width=20)
         self.pin_input.pack(pady=5) 
-        tk.Button(login_win,text="Log In",command=self.check_login).pack(pady=10)
+        tk.Button(login_win,text="Log In",command=lambda:self.check_login(login_win)).pack(pady=10)
         
         
         
-    def check_login(self):
+    def check_login(self,login_win):
         self.login_card = self.card_input.get()
         self.login_pin = self.pin_input.get()
         cur.execute(f"""SELECT
@@ -105,22 +105,28 @@ class Card:
                         ;""") #입력받은 정보를 통해 sql문으로 db조회
         
         self.row = cur.fetchone() #만약 cur에 입력받은게 있으면 그 값을 가져오고, 없다면 NULL을 가져옴
+        #login_win.destroy() #디버깅용 코드. 아랫줄도
+        #self.success() #로그인 성공시 메뉴 
+        
         if self.row: #계정 존재시 로그인 성공
             self.balance = self.row[3] #db의 네번째 요소인 balance(id, number, pin, balance 중 balance)를 이 instance의 balance에 넣음.
             print('\nYou have successfully logged in')
-            #self.login_win.destroy()
-            self.success() #로그인 성공시 메뉴
+            login_win.destroy()
+            self.success() #로그인 성공시 메뉴 
 
         else:
-            print("wrong card number or pin")
-
+            #print("wrong card number or pin")
+            messagebox.showerror("error","wrong card number or pin")
         '''elif not self.luhn_2(self.login_card):
-            print('Probably you made a mistake in the card number. Please try again!')'''
+                print('Probably you made a mistake in the card number. Please try again!') '''
 
                 
     def success(self): #1.자산확인 2.입금기능 3.송금기능 4.계좌폐쇄 5.로그아웃 0.종료
-        #self.destroy_window()
-        
+        myaccount = tk.Toplevel(root)
+        myaccount.title("My Account")
+        myaccount.geometry("400x900")
+        tk.Button(myaccount,text="1. Balance",command=lambda:self.mybalance(myaccount)).pack(pady=10)
+        tk.Button(myaccount,text="2. Add income",command=lambda:self.addincome(myaccount)).pack(pady=10)
         while True: #입력받은 숫자에 따라 기능 실행
             print("""\n1. Balance
 2. Add income
@@ -176,6 +182,36 @@ class Card:
                 conn.close()
                 sys.exit()
 
+    
+    def mybalance(self, myaccount):
+        if not hasattr(self, 'balance_label'):
+            self.balance_label = tk.Label(myaccount, text=f"Balance: {self.balance}", width=20)
+            self.balance_label.pack()
+        else:
+            self.balance_label.config(text=f"Balance: {self.balance}")
+    
+    
+    def addmethod(self,myaccount,add):       
+        try:
+            income = int(add.get())
+            self.balance += income
+            messagebox.showinfo("Info",f"Income has been added! your balance : {self.balance}")
+            self.balance_label.config(text=f"Balance: {self.balance}")
+        except ValueError:
+            messagebox.showerror("Invalid input", "Please enter a valid integer.")
+        #tk.Button(myaccount,text="addincome",command=lambda:self.mybalance(myaccount)).pack(5)
+        
+        
+    def addincome(self,myaccount):
+        if not hasattr(self,'add_label'):
+        #mybalwin = tk.Toplevel(myaccount)
+            self.add_label = tk.Label(myaccount,text="Add income: ").pack(pady=5)
+            add = tk.Entry(myaccount,width=20)
+            add.pack()
+            tk.Button(myaccount,text="Add",command = lambda:self.addmethod(myaccount,add)).pack(pady=10)
+        
+         
+    
     # 룬2 : 카드번호의 유효성. 이 검사를 통과할 시 true, 못하면 false
     def luhn_2(self, num): #Luhn 알고리즘을 사용해 카드번호가 유효한지 판단
         num2 = num[:]
