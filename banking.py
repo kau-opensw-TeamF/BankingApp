@@ -6,12 +6,15 @@ import sqlite3
 #랜덤 번호 생성을 위한 시드 설정
 random.seed()
 
-#sqlite3 DB 연결
-conn = sqlite3.connect('card.s3db')#이전에 명명된 db와 연결
+#SQLite3 DB 연결
+conn = sqlite3.connect('card.s3db') #이전에 명명된 DB와 연결
 cur = conn.cursor() #SQL 스크랩트를 실행하기 위한 커서 객체 생성
 
 # card 테이블이 없는 경우 생성
-cur.execute("CREATE TABLE IF NOT EXISTS card(id INTEGER PRIMARY KEY,number TEXT,pin TEXT,balance INTEGER DEFAULT 0);")
+cur.execute("""CREATE TABLE IF NOT EXISTS card(
+            id INTEGER PRIMARY KEY,
+            number TEXT,pin TEXT,
+            balance INTEGER DEFAULT 0);""")
 
 # transactions 테이블이 존재하지 않는 경우 생성
 cur.execute("""CREATE TABLE IF NOT EXISTS transactions(
@@ -40,7 +43,7 @@ class Card:
 
         # 랜덤한 카드 번호 생성
         self.card = '400000' + str(random.randint(100000000, 999999999)) 
-        print(self.luhn()) #luhn 알고리즘을 통해 검증가능한 유효 카드번호 반환
+        print(self.luhn()) #luhn 알고리즘을 통해 검증가능한 유효 카드 번호 반환
 
         #랜덤한 핀 생성
         print("Your card PIN:")
@@ -65,7 +68,7 @@ class Card:
                         FROM 
                             card
                         WHERE
-                            number = ? AND pin = ?;""", (self.login_card, self.login_pin)) #입력받은 정보를 통해 sql문으로 db조회
+                            number = ? AND pin = ?;""", (self.login_card, self.login_pin))
 
         self.row = cur.fetchone() #조회 결과를 가져옴
         if self.row: #계정이 존재할 경우
@@ -79,7 +82,7 @@ class Card:
         '''elif not self.luhn_2(self.login_card):
             print('Probably you made a mistake in the card number. Please try again!')'''
             
-    def success(self): #1.자산확인 2.입금기능 3.송금기능 4.계좌폐쇄 5.로그아웃 0.종료
+    def success(self): # 계정 메뉴
         while True: #입력받은 숫자에 따라 기능 실행
             print("""\n1. Balance
 2. Add income
@@ -107,9 +110,9 @@ class Card:
                 receiver_card = input() #돈을 보낼 카드번호를 입력받고 db에 receiver_card에 저장.
                 cur.execute("SELECT id, number,pin,balance FROM card WHERE number = ?;", (receiver_card,))
 
-                if not self.luhn_2(receiver_card): #룬2에서 반환받은 값이 false라면
+                if not self.luhn_2(receiver_card): #유효하지 않은 카드 번호일 경우
                     print('Probably you made a mistake in the card number. Please try again!')
-                elif not cur.fetchone(): #카드번호 자체가 없을시
+                elif not cur.fetchone(): #카드 번호 자체가 없을시
                     print('Such a card does not exist')
                 else:
                     transfer = int(input("Enter how much money you want to transfer:\n")) #송금액 입력
@@ -125,14 +128,15 @@ class Card:
 
                         # 트랜잭션 로그 기록 (송금자)
                         cur.execute("INSERT INTO transactions (card_number, transaction_type, amount) VALUES (?, ?, ?);", 
-                                        (self.login_card, 'transfer_out', transfer))                            # 트랜잭션 로그 기록 (수신자)
+                                        (self.login_card, 'transfer_out', transfer))                            
+                        # 트랜잭션 로그 기록 (수신자)
                         cur.execute("INSERT INTO transactions (card_number, transaction_type, amount) VALUES (?, ?, ?);", 
                                         (receiver_card, 'transfer_in', transfer))
                             
                         conn.commit() #변경 사항 저장
                         print("Success!")
             elif i == 4: #계좌 해지
-                cur.execute("DELETE FROM card WHERE number = ?", (self.login_card,)) #sql문으로 해당 카드와 관련된 DB내 모든 정보 삭제
+                cur.execute("DELETE FROM card WHERE number = ?", (self.login_card,)) #DB에서 해당 카드 정보 삭제
                 conn.commit() #변경 사항 저장
                 print('\nThe account has been closed!')
                 break
