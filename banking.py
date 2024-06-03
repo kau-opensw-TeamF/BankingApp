@@ -1,4 +1,3 @@
-
 import random
 import sys
 import sqlite3
@@ -99,7 +98,8 @@ class Card:
         login_win = tk.Toplevel(self.root)
         login_win.title("Log In")
         login_win.geometry("350x200")
-        
+        #self.root.wait_window()
+        login_win.grab_set()
         tk.Label(login_win, text="Enter your card number:").pack(pady=5)
         self.card_input = tk.Entry(login_win,width=20)
         self.card_input.pack(pady=5)
@@ -146,6 +146,11 @@ class Card:
         myaccount.title("My Account")
         myaccount.geometry("350x600")
         myaccount.resizable(width=False, height=False)
+        myaccount.grab_set()
+        myaccount.protocol('WM_DELETE_WINDOW', lambda:self.logout(myaccount))
+        
+        
+        #self.root.wait_window()
         tk.Button(myaccount,text="0. exit",command=self.exit).grid(row=5,column=5,pady=20)
         tk.Button(myaccount,text="1. Balance",command=lambda:self.mybalance(myaccount)).grid(row=10,column=5,pady=20)
         tk.Button(myaccount,text="2. Add income",command=lambda:self.addincome(myaccount)).grid(row=15,column=5,padx = 10, pady=20)
@@ -199,6 +204,9 @@ class Card:
             else:
                 tfwin = tk.Toplevel(myaccount)
                 tfwin.geometry("700x150")
+                tfwin.grab_set()
+                #myaccount.wait_window()
+                #self.root.wait_window()
                 label = tk.Label(tfwin,text="Enter how much money you want to transfer").pack()
                 tfmoney = tk.Entry(tfwin,width=20)
                 tfmoney.pack(pady=10)
@@ -225,6 +233,8 @@ class Card:
         closewin = tk.Toplevel(myaccount)
         closewin.geometry("300x90")
         closewin.resizable(width=False, height=False)
+        closewin.grab_set()
+        #self.root.wait_window()
         label = tk.Label(closewin,text="Do you want to Delete this account?")
         label.pack()
         tk.Button(closewin,text="yes",command=lambda:self.deleteaccount(myaccount),width=10,height=2).pack(side = "bottom",pady=10)
