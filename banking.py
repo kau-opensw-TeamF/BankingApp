@@ -2,19 +2,24 @@
 import random
 import sys
 import sqlite3
+
 random.seed()
 
 #sqlite3 DB
-conn = sqlite3.connect('card.s3db')#이전에 명명된 db와 연결
+conn = sqlite3.connect('card.s3db') #이전에 명명된 db와 연결
 cur = conn.cursor() #cursor object 생성으로 sql script 동작
 # cur.execute("DROP TABLE card")
 # card 테이블이 없는 경우 생성
-cur.execute("CREATE TABLE IF NOT EXISTS card(id INTEGER PRIMARY KEY,number TEXT,pin TEXT,balance INTEGER DEFAULT 0);")
+cur.execute("""
+CREATE TABLE IF NOT EXISTS card(
+    id INTEGER PRIMARY KEY,
+    number TEXT,
+    pin TEXT,balance INTEGER DEFAULT 0
+    );""")
 conn.commit() #DB에 결과 저장
 
 
 class Card:
-
     def __init__(self): #생성자 card의 instance attribute : card, pin, login_card, login_pin, row, balance, receiver_balance 값 초기화
         self.card = ''
         self.pin = ''
@@ -94,17 +99,11 @@ class Card:
         self.login_card = input(self.translate('enter_card') + "\n")
         self.login_pin = input(self.translate('enter_card') + "\n")
 
-        cur.execute(f"""SELECT
-                            id,
-                            number,
-                            pin,
-                            balance
-                        FROM 
-                            card
-                        WHERE
-                            number = {self.login_card}
-                            AND pin = {self.login_pin}
-                        ;""") #입력받은 정보를 통해 sql문으로 db조회
+        cur.execute(f"""
+        SELECT id, number, pin, balance
+        FROM  card
+        WHERE number = {self.login_card} AND pin = {self.login_pin}
+        ;""") #입력받은 정보를 통해 sql문으로 db조회
 
         self.row = cur.fetchone() #만약 cur에 입력받은게 있으면 그 값을 가져오고, 없다면 NULL을 가져옴
         if self.row: #계정 존재시 로그인 성공
