@@ -20,7 +20,8 @@ class Card:
     def __init__(self, root): #생성자 card의 instance attribute : card, pin, login_card, login_pin, row, balance, receiver_balance 값 초기화
         self.root = root
         self.root.title("OpenSourceSW Team F")
-        self.root.geometry("400x900")
+        self.root.geometry("500x300")
+        self.root.resizable(width=False, height=False)
         self.card = ''
         self.pin = ''
         self.login_card = ''
@@ -38,47 +39,57 @@ class Card:
         for kidwin in self.root.winfo_children():
             kidwin.destroy()
     
-    def main_window(self): #제일 초기 화면을 보여주는 코드.
+    def main_window(self):
         self.destroy_window()
-        tk.Label(self.root, text = "초기 화면").pack(pady = 20)
-        tk.Button(self.root,text="0. exit",command=self.exit).pack(pady=10)
-        tk.Button(self.root,text="1.create account",command = self.create_account).pack(pady=5)
-        tk.Button(self.root,text="2.log in",command=self.log_in).pack(pady=2)
+        
+        # 그리드 행과 열 구성
+        self.root.grid_rowconfigure(0, weight=1)
+        self.root.grid_rowconfigure(1, weight=1)
+        self.root.grid_rowconfigure(2, weight=1)
+        self.root.grid_columnconfigure(0, weight=1)
+        self.root.grid_columnconfigure(1, weight=1)
+        self.root.grid_columnconfigure(2, weight=1)
 
+        tk.Label(self.root, text="기능을 선택해주세요").grid(row=0, column=1, pady=10)
+
+        
+        button1 = tk.Button(self.root, text="1. Create account", command=self.create_account, width=20, height=10)
+        button2 = tk.Button(self.root, text="2. Log in", command=self.log_in, width=20, height=10)
+        button3 = tk.Button(self.root, text="3. Exit", command=self.exit, width=20, height=10)
+
+        button1.grid(row=1, column=0, padx=10, pady=10, sticky='nsew')
+        button2.grid(row=1, column=1, padx=10, pady=10, sticky='nsew')
+        button3.grid(row=1, column=2, padx=10, pady=10, sticky='nsew')
+
+
+        # 그리드 행과 열 구성 조정
+        self.root.grid_rowconfigure(3, weight=1)
+        self.root.grid_columnconfigure(3, weight=1)
     
-    
-    def exit(self): #모든 창을 닫는 코드
+    def exit(self): #모든 창을 닫는 코드s
         conn.close()
         messagebox.showinfo("info","See you Next time!")
         self.destroy_window()
         root.destroy()
         sys.exit()
         
-    def show_account(self,account,pin):
-        label_account = tk.Label(root,text="여기")
-        label_account.pack(pady=2)
-        label_pin = tk.Label(root,text="저기")
-        label_pin.pack(pady=3)
-        label_account.config(text =f"Account : {account}")
-        label_pin.config(text =f"pin: {pin}")
+    def show_account(self, account, pin):
+        label_account = tk.Label(self.root, text=f"Account : {account}")
+        label_pin = tk.Label(self.root, text=f"Pin : {pin}")
+        label_account.grid(row=3, column=1, pady=2)
+        label_pin.grid(row=4, column=1, pady=3)
         
-        
-
-    def create_account(self): #카드번호 생성 # 새로운 창을 열기? 그냥 아래에다가 보여주기? 
-        
-        #print("Your card has been created") 여기있는 콘솔 프린트 말고 gui에 출력해야함.
-        #print("Your card number:")
+    def create_account(self):
         # 랜덤한 카드 번호 생성
         self.card = '400000' + str(random.randint(100000000, 999999999))
         new_account = self.luhn()
-        #print(self.luhn()) #luhn을 통해 검증가능한 유효 카드번호 반환
-        #print("Your card PIN:")
-        self.pin = str(random.randint(1000, 9999)) #랜덤한 pin번호 생성
+        # 랜덤한 PIN 번호 생성
+        self.pin = str(random.randint(1000, 9999))
         
-        self.show_account(new_account,self.pin)
-        #print(self.pin)
+        self.show_account(new_account, self.pin)
+        
         # 생성된 계정 정보를 데이터베이스에 삽입
-        cur.execute(f"""INSERT INTO card (number, pin) VALUES ({self.card}, {self.pin});""") #DB에 카드, pin 정보 추가
+        cur.execute(f"INSERT INTO card (number, pin) VALUES (?, ?)", (self.card, self.pin)) # DB에 카드, pin 정보 추가
         conn.commit() # 저장
         
     def log_in(self): #카드번호와 PIN을 받아서 sql문으로 검색, 검색된 경우 sucess문으로 넘어감
@@ -96,8 +107,7 @@ class Card:
         self.pin_input = tk.Entry(login_win,width=20)
         self.pin_input.pack(pady=5) 
         tk.Button(login_win,text="Log In",command=lambda:self.check_login(login_win)).pack(pady=10)
-        
-        
+    
         
     def check_login(self,login_win):
         self.login_card = self.card_input.get()
@@ -134,119 +144,29 @@ class Card:
     def success(self): #1.자산확인 2.입금기능 3.송금기능 4.계좌폐쇄 5.로그아웃 0.종료
         myaccount = tk.Toplevel(root)
         myaccount.title("My Account")
-        myaccount.geometry("400x900")
-        tk.Button(myaccount,text="0. exit",command=self.exit).pack(pady=10)
-        tk.Button(myaccount,text="1. Balance",command=lambda:self.mybalance(myaccount)).pack(pady=10)
-        tk.Button(myaccount,text="2. Add income",command=lambda:self.addincome(myaccount)).pack(pady=10)
-        tk.Button(myaccount,text="3. Do transfer",command=lambda:self.transfer(myaccount)).pack(pady=10)
-        tk.Button(myaccount,text="4.Close account",command=lambda:self.closeaccount(myaccount)).pack(pady=10)
-        tk.Button(myaccount,text="5. Log out",command=lambda:self.logout(myaccount)).pack(pady=10)
-        
-        while True: #입력받은 숫자.에 따라 기능 실행
-            print("""\n1. Balance
-2. Add income
-3. Do transfer
-4. Close account
-5. Log out
-0. Exit""")
-            i = int(input())
-            if i == 1: #자산확인
-                print('\nBalance: ', self.balance) #현재 내 자산 출력
-                print()
-            elif i == 2: #입금기능
-                print('\nEnter income:')
-                amount = int(input())
-                self.balance += amount #기존잔고 + 입금액
-                # 잔액 업데이트 및 입금 내역 데이터베이스에 기록
-                cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
-                conn.commit() #DB저장
-                print('Income was added!')
-            elif i == 3: #송금기능
-                print('\nTransfer\nEnter card number:')
-                receiver_card = input() #돈을 보낼 카드번호를 입력받고 db에 receiver_card에 저장.
-                cur.execute(f'SELECT id, number,pin,balance FROM card WHERE number = {receiver_card};')
-
-                if not self.luhn_2(receiver_card): #룬2에서 반환받은 값이 false라면
-                    print('Probably you made a mistake in the card number. Please try again!')
-                elif not cur.fetchone(): #카드번호 자체가 없을시
-                    print('Such a card does not exist.')
-                else:
-                    transfer = int(input("Enter how much money you want to transfer:\n")) #송금액 입력
-                    if transfer > self.balance:
-                        print("Not enough money!") #송금액이 자산총액보다 많을 경우
-                    else: #계좌에서 실제로 이체
-                        self.balance -= transfer #송금자 자산총액에서 송금액 제외. DB에 업데이트
-                        cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
-                        self.receiver_balance += transfer #수금자 자산총액에서 송금액 추가. DB에 업데이트
-                        cur.execute(f'UPDATE card SET balance = {self.receiver_balance} WHERE number = {receiver_card};')
-                        cur.execute(f'SELECT * FROM card WHERE number = {self.login_card}') #송금자 카드번호를 기반으로 DB내 모든 정보 조회
-                        print(cur.fetchone())
-                        print("Success!")
-                        conn.commit()
-
-            elif i == 4: #계좌폐쇄
-                cur.execute(f"DELETE FROM card WHERE number = {self.login_card}") #sql문으로 해당 카드와 관련된 DB내 모든 정보 삭제
-                conn.commit()
-                print('\nThe account has been closed!')
-                break
-            elif i == 5: #로그아웃
-                print("\nYou have successfully log out!")
-                break
-            elif i == 0: #종료
-                print("\nBye!")
-                conn.close()
-                sys.exit()
-
-    def transfermethod(self,myaccount,receivecard):
-        try:
-            self.receiver_card = str(receivecard.get())
-            cur.execute(f'SELECT id, number,pin,balance FROM card WHERE number = {self.receiver_card};')
-            if not self.luhn_2(self.receiver_card): #룬2에서 반환받은 값이 false라면
-                messagebox.showerror("error:numbermistake",'Probably you made a mistake in the card number. Please try again!')
-            elif not cur.fetchone(): #카드번호 자체가 없을시
-                messagebox.showerror("error:numbernull",'Such a card does not exist.')
-            else:
-                tfwin = tk.Toplevel(myaccount)
-                tfwin.geometry("300x450")
-                label = tk.Label(tfwin,text="Enter how much money you want to transfer").pack()
-                tfmoney = tk.Entry(tfwin,width=20)
-                tfmoney.pack(pady=10)
-                tk.Button(tfwin,text="Enter",command=lambda:self.tfmoneycheck(tfmoney)).pack()
-        except ValueError:
-            messagebox.showerror("error","error")
-        
-    def tfmoneycheck(self,tfmoney):
-        try:
-            tfmoney = int(tfmoney.get())
-            if tfmoney > self.balance:
-                messagebox.showerror("Error","Not Enough Money!")
-            else:
-                self.balance -= tfmoney #송금자 자산총액에서 송금액 제외. DB에 업데이트
-                cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
-                self.receiver_balance += tfmoney #수금자 자산총액에서 송금액 추가. DB에 업데이트
-                cur.execute(f'UPDATE card SET balance = {self.receiver_balance} WHERE number = {self.receiver_card};')
-                cur.execute(f'SELECT * FROM card WHERE number = {self.login_card}') #송금자 카드번호를 기반으로 DB내 모든 정보 조회
-                messagebox.showinfo("info",f"success! money : {cur.fetchone()}\n My balance : {self.balance}")
-                conn.commit()
-        except ValueError:
-            messagebox.showerror("Error","Invalid integer input")
-        
-    def transfer(self,myaccount):
-        if not hasattr(self,'tf_label'):
-            #로직 : receiver_card 번호 입력받고,  송금액 입력받고, 실제로 구현해서 보여주기. 내 계좌 변동도 보여주기.
-            self.tf_label = tk.Label(myaccount,text="Transfer Enter Card Number").pack(pady=5)
-            receivecard = tk.Entry(myaccount,width=20)
-            receivecard.pack(pady=10)
-            tk.Button(myaccount,text="Enter",command=lambda:self.transfermethod(myaccount,receivecard)).pack()
-        
+        myaccount.geometry("350x600")
+        myaccount.resizable(width=False, height=False)
+        tk.Button(myaccount,text="0. exit",command=self.exit).grid(row=5,column=5,pady=20)
+        tk.Button(myaccount,text="1. Balance",command=lambda:self.mybalance(myaccount)).grid(row=10,column=5,pady=20)
+        tk.Button(myaccount,text="2. Add income",command=lambda:self.addincome(myaccount)).grid(row=15,column=5,padx = 10, pady=20)
+        tk.Button(myaccount,text="3. Do transfer",command=lambda:self.transfer(myaccount)).grid(row=20,column=5,padx = 10,pady=20)
+        tk.Button(myaccount,text="4.Close account",command=lambda:self.closeaccount(myaccount)).grid(row=25,column=5,padx = 10,pady=20)
+        tk.Button(myaccount,text="5. Log out",command=lambda:self.logout(myaccount)).grid(row=30,column=5,pady=20)
+    
     def mybalance(self, myaccount):
         if not hasattr(self, 'balance_label'):
             self.balance_label = tk.Label(myaccount, text=f"Balance: {self.balance}", width=20)
-            self.balance_label.pack()
+            self.balance_label.grid(row=10,column=10,padx = 10, pady=20)
         else:
             self.balance_label.config(text=f"Balance: {self.balance}")
     
-    
+    def addincome(self,myaccount):
+        if not hasattr(self,'add_label'):
+        #mybalwin = tk.Toplevel(myaccount)
+            self.add_label = tk.Label(myaccount,text="Add income: ").grid(row=12,column=10)
+            add = tk.Entry(myaccount,width=15)
+            add.grid(row=15,column=10)
+            tk.Button(myaccount,text="Add",command = lambda:self.addmethod(myaccount,add)).grid(row=16,column=10)
     def addmethod(self,myaccount,add):       
         try:
             income = int(add.get())
@@ -261,31 +181,74 @@ class Card:
         #tk.Button(myaccount,text="addincome",command=lambda:self.mybalance(myaccount)).pack(5)
         
         
-    def addincome(self,myaccount):
-        if not hasattr(self,'add_label'):
-        #mybalwin = tk.Toplevel(myaccount)
-            self.add_label = tk.Label(myaccount,text="Add income: ").pack(pady=5)
-            add = tk.Entry(myaccount,width=20)
-            add.pack()
-            tk.Button(myaccount,text="Add",command = lambda:self.addmethod(myaccount,add)).pack(pady=10)
-        
-         
+    def transfer(self,myaccount):
+        if not hasattr(self,'tf_label'):
+            #로직 : receiver_card 번호 입력받고,  송금액 입력받고, 실제로 구현해서 보여주기. 내 계좌 변동도 보여주기.
+            self.tf_label = tk.Label(myaccount,text="Transfer Enter Card Number").grid(row=18,column=10)
+            receivecard = tk.Entry(myaccount,width=20)
+            receivecard.grid(row=20,column=10)
+            tk.Button(myaccount,text="Enter",command=lambda:self.transfermethod(myaccount,receivecard)).grid(row=22,column=10)
+    def transfermethod(self,myaccount,receivecard):
+        try:
+            self.receiver_card = str(receivecard.get())
+            cur.execute(f'SELECT id, number,pin,balance FROM card WHERE number = {self.receiver_card};')
+            if not self.luhn_2(self.receiver_card): #룬2에서 반환받은 값이 false라면
+                messagebox.showerror("error:numbermistake",'Probably you made a mistake in the card number. Please try again!')
+            elif not cur.fetchone(): #카드번호 자체가 없을시
+                messagebox.showerror("error:numbernull",'Such a card does not exist.')
+            else:
+                tfwin = tk.Toplevel(myaccount)
+                tfwin.geometry("700x150")
+                label = tk.Label(tfwin,text="Enter how much money you want to transfer").pack()
+                tfmoney = tk.Entry(tfwin,width=20)
+                tfmoney.pack(pady=10)
+                tk.Button(tfwin,text="Enter",command=lambda:self.tfmoneycheck(tfmoney)).pack()
+        except ValueError:
+            messagebox.showerror("error","error")
+    def tfmoneycheck(self,tfmoney):
+        try:
+            tfmoney = int(tfmoney.get())
+            if tfmoney > self.balance:
+                messagebox.showerror("Error","Not Enough Money!")
+            else:
+                self.balance -= tfmoney #송금자 자산총액에서 송금액 제외. DB에 업데이트
+                cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
+                self.receiver_balance += tfmoney #수금자 자산총액에서 송금액 추가. DB에 업데이트
+                cur.execute(f'UPDATE card SET balance = {self.receiver_balance} WHERE number = {self.receiver_card};')
+                cur.execute(f'SELECT * FROM card WHERE number = {self.login_card}') #송금자 카드번호를 기반으로 DB내 모든 정보 조회
+                messagebox.showinfo("info",f"success! My balance : {self.balance}")
+                conn.commit()
+        except ValueError:
+            messagebox.showerror("Error","Invalid integer input")
+
     def closeaccount(self,myaccount):
         closewin = tk.Toplevel(myaccount)
-        closewin.geometry("300x200")
+        closewin.geometry("300x90")
+        closewin.resizable(width=False, height=False)
         label = tk.Label(closewin,text="Do you want to Delete this account?")
         label.pack()
-        tk.Button(closewin,text="yes",command=lambda:self.deleteaccount(myaccount),width=2).pack()
+        tk.Button(closewin,text="yes",command=lambda:self.deleteaccount(myaccount),width=10,height=2).pack(side = "bottom",pady=10)
         
     def deleteaccount(self,myaccount):
         cur.execute(f"DELETE FROM card WHERE number = {self.login_card}") #sql문으로 해당 카드와 관련된 DB내 모든 정보 삭제
         conn.commit()
         messagebox.showinfo("info","The account has been deleted!")
-        myaccount.destroy()  
-    
-    
+        self.logout(myaccount)
+ 
     def logout(self,myaccount):
-        messagebox.showinfo("info","You have successfully log out!")
+        #messagebox.showinfo("info","You have successfully log out!")
+        messagebox.showinfo("info", "You have successfully logged out!")
+        
+        # 로그인 정보 초기화
+        self.login_card = ''
+        self.login_pin = ''
+        self.row = []
+        self.balance = 0
+        self.receiver_balance = 0
+        if hasattr (self,'balance_label'): del self.balance_label
+        if hasattr (self,'tf_label'): del self.tf_label
+        if hasattr (self,'add_label'): del self.add_label
+        # 초기 화면으로 돌아가기
         myaccount.destroy()
     
     # 룬2 : 카드번호의 유효성. 이 검사를 통과할 시 true, 못하면 false
@@ -335,23 +298,7 @@ class Card:
         
         return self.card
         
-    def menu(self): #메뉴 표시 메소드 1.계좌생성 2.로그인 0.종료
-        while True:
-            print("""\n1. Create an account
-2. Log into account
-0. Exit""")
-            i = int(input())
-            if i == 1:
-                self.create_account()
-            elif i == 2:
-                self.log_in()
-            elif i == 0:
-                conn.close()
-                print("\nBye!")
-                break
-            else:
-                print("Invalid input")
-
+    
 
 
 
