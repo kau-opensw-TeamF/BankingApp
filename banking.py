@@ -36,7 +36,11 @@ class Card:
         self.language = 'en'
         self.messages = {
             'en': {
-                'welcome': "\n1. Create an account\n2. Log into account\n9. Switch Language\n0. Exit",
+                'select_fucntion': "Select a function",
+                #'welcome': "\n1. Create an account\n2. Log into account\n9. Switch Language\n0. Exit",
+                'createaccbtn' : "Create an account",
+                'loginbtn' : "Log into account",
+                'exitbtn' : "Exit",
                 'menu': "\n1. Balance\n2. Add income\n3. Do transfer\n4. Close account\n5. Log out\n9. Switch Language\n0. Exit",
                 'create_card': "Your card has been created\nYour card number:",
                 'create_pin': "Your card PIN:",
@@ -59,6 +63,7 @@ class Card:
                 'invalid_input': "Invalid input",
             },
             'ko': {
+                'select_fucntion': "기능을 선택하세요.",
                 'welcome': "\n1. 계좌 생성\n2. 로그인\n9. 영한 변환\n0. 종료",
                 'menu': "\n1. 잔액 확인\n2. 수입 추가\n3. 이체\n4. 계좌 폐쇄\n5. 로그아웃\n9. 영한 변환\n0. 종료",
                 'create_card': "카드가 생성되었습니다\n카드 번호:",
@@ -92,7 +97,7 @@ class Card:
     #en기본언어 ko변경 감지시 switch
     def switch_language(self):
         self.language = 'ko' if self.language == 'en' else 'en'
-    
+        messagebox.showinfo("info","language has been changed to english")
         
     def create_account(self): #카드번호 생성
         print(self.translate('create_card'))
@@ -121,18 +126,20 @@ class Card:
         self.root.grid_columnconfigure(1, weight=1)
         self.root.grid_columnconfigure(2, weight=1)
 
-        tk.Label(self.root, text="기능을 선택해주세요").grid(row=0, column=1, pady=10)
+        tk.Label(self.root, text=self.translate('select_fucntion')).grid(row=0, column=1, pady=10)
 
         
-        button1 = tk.Button(self.root, text="1. Create account", command=self.create_account, width=20, height=10)
-        button2 = tk.Button(self.root, text="2. Log in", command=self.log_in, width=20, height=10)
-        button3 = tk.Button(self.root, text="3. Exit", command=self.exit, width=20, height=10)
+        button1 = tk.Button(self.root, text=self.translate('createaccbtn'), command=self.create_account, width=20, height=10)
+        button2 = tk.Button(self.root, text=self.translate('loginbtn'), command=self.log_in, width=20, height=10)
+        button3 = tk.Button(self.root, text=self.translate('exitbtn'), command=self.exit, width=20, height=10)
         button4 = tk.Button(self.root, text="Admin", command=self.admin_menu, width=5, height=2)
-
+        button5 = tk.Button(self.root, text=f"Switch Language", command=self.switch_language, width=4, height=2)
+        
         button1.grid(row=1, column=0, padx=10, pady=10, sticky='nsew')
         button2.grid(row=1, column=1, padx=10, pady=10, sticky='nsew')
         button3.grid(row=1, column=2, padx=10, pady=10, sticky='nsew')
         button4.grid(row=0, column=2, padx=10, pady=10, sticky='nsew')
+        button5.grid(row=0, column=0, padx=10, pady=10, sticky='nsew')
 
         # 그리드 행과 열 구성 조정
         self.root.grid_rowconfigure(3, weight=1)
