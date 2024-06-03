@@ -34,16 +34,26 @@ class Card:
         self.main_window()
         
         
-    def destroy_window(self): # gui 에서 화면을 지우는 코드.
+    def destroy_window(self): # gui 에서 화면을 지우는 코드. 처음 화면 초기화 시에 사용
         for kidwin in self.root.winfo_children():
             kidwin.destroy()
     
     def main_window(self): #제일 초기 화면을 보여주는 코드.
         self.destroy_window()
         tk.Label(self.root, text = "초기 화면").pack(pady = 20)
+        tk.Button(self.root,text="0. exit",command=self.exit).pack(pady=10)
         tk.Button(self.root,text="1.create account",command = self.create_account).pack(pady=5)
         tk.Button(self.root,text="2.log in",command=self.log_in).pack(pady=2)
+
     
+    
+    def exit(self): #모든 창을 닫는 코드
+        conn.close()
+        messagebox.showinfo("info","See you Next time!")
+        self.destroy_window()
+        root.destroy()
+        sys.exit()
+        
     def show_account(self,account,pin):
         label_account = tk.Label(root,text="여기")
         label_account.pack(pady=2)
@@ -125,10 +135,14 @@ class Card:
         myaccount = tk.Toplevel(root)
         myaccount.title("My Account")
         myaccount.geometry("400x900")
+        tk.Button(myaccount,text="0. exit",command=self.exit).pack(pady=10)
         tk.Button(myaccount,text="1. Balance",command=lambda:self.mybalance(myaccount)).pack(pady=10)
         tk.Button(myaccount,text="2. Add income",command=lambda:self.addincome(myaccount)).pack(pady=10)
         tk.Button(myaccount,text="3. Do transfer",command=lambda:self.transfer(myaccount)).pack(pady=10)
-        while True: #입력받은 숫자에 따라 기능 실행
+        tk.Button(myaccount,text="4.Close account",command=lambda:self.closeaccount(myaccount)).pack(pady=10)
+        tk.Button(myaccount,text="5. Log out",command=lambda:self.logout(myaccount)).pack(pady=10)
+        
+        while True: #입력받은 숫자.에 따라 기능 실행
             print("""\n1. Balance
 2. Add income
 3. Do transfer
@@ -218,11 +232,12 @@ class Card:
             messagebox.showerror("Error","Invalid integer input")
         
     def transfer(self,myaccount):
-        #로직 : receiver_card 번호 입력받고,  송금액 입력받고, 실제로 구현해서 보여주기. 내 계좌 변동도 보여주기.
-        label = tk.Label(myaccount,text="Transfer Enter Card Number").pack(pady=5)
-        receivecard = tk.Entry(myaccount,width=20)
-        receivecard.pack(pady=10)
-        tk.Button(myaccount,text="Enter",command=lambda:self.transfermethod(myaccount,receivecard)).pack()
+        if not hasattr(self,'tf_label'):
+            #로직 : receiver_card 번호 입력받고,  송금액 입력받고, 실제로 구현해서 보여주기. 내 계좌 변동도 보여주기.
+            self.tf_label = tk.Label(myaccount,text="Transfer Enter Card Number").pack(pady=5)
+            receivecard = tk.Entry(myaccount,width=20)
+            receivecard.pack(pady=10)
+            tk.Button(myaccount,text="Enter",command=lambda:self.transfermethod(myaccount,receivecard)).pack()
         
     def mybalance(self, myaccount):
         if not hasattr(self, 'balance_label'):
@@ -239,7 +254,8 @@ class Card:
             cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
             conn.commit() #DB저장
             messagebox.showinfo("Info",f"Income has been added! your balance : {self.balance}")
-            self.balance_label.config(text=f"Balance: {self.balance}")
+            #self.balance_label.config(text=f"Balance: {self.balance}")
+            self.mybalance(myaccount)
         except ValueError:
             messagebox.showerror("Invalid input", "Please enter a valid integer.")
         #tk.Button(myaccount,text="addincome",command=lambda:self.mybalance(myaccount)).pack(5)
@@ -254,6 +270,23 @@ class Card:
             tk.Button(myaccount,text="Add",command = lambda:self.addmethod(myaccount,add)).pack(pady=10)
         
          
+    def closeaccount(self,myaccount):
+        closewin = tk.Toplevel(myaccount)
+        closewin.geometry("300x200")
+        label = tk.Label(closewin,text="Do you want to Delete this account?")
+        label.pack()
+        tk.Button(closewin,text="yes",command=lambda:self.deleteaccount(myaccount),width=2).pack()
+        
+    def deleteaccount(self,myaccount):
+        cur.execute(f"DELETE FROM card WHERE number = {self.login_card}") #sql문으로 해당 카드와 관련된 DB내 모든 정보 삭제
+        conn.commit()
+        messagebox.showinfo("info","The account has been deleted!")
+        myaccount.destroy()  
+    
+    
+    def logout(self,myaccount):
+        messagebox.showinfo("info","You have successfully log out!")
+        myaccount.destroy()
     
     # 룬2 : 카드번호의 유효성. 이 검사를 통과할 시 true, 못하면 false
     def luhn_2(self, num): #Luhn 알고리즘을 사용해 카드번호가 유효한지 판단
