@@ -12,6 +12,14 @@ cur = conn.cursor() #SQL 스크랩트를 실행하기 위한 커서 객체 생�
 
 # card 테이블이 없는 경우 생성
 cur.execute("CREATE TABLE IF NOT EXISTS card(id INTEGER PRIMARY KEY,number TEXT,pin TEXT,balance INTEGER DEFAULT 0);")
+
+# transactions 테이블이 존재하지 않는 경우 생성
+cur.execute("""CREATE TABLE IF NOT EXISTS transactions(
+                id INTEGER PRIMARY KEY,
+                card_number TEXT,
+                transaction_type TEXT,
+                amount INTEGER,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP);""")
 conn.commit() #DB에 결과 저장
 
 
@@ -89,35 +97,40 @@ class Card:
                 self.balance += amount #기존잔고 + 입금액
                 # 잔액 업데이트 및 입금 내역 데이터베이스에 기록
                 cur.execute("UPDATE card SET balance = ? WHERE number = ?;", (self.balance, self.login_card))
+                # 트랜잭션 로그 기록
+                cur.execute("INSERT INTO transactions (card_number, transaction_type, amount) VALUES (?, ?, ?);", 
+                            (self.login_card, 'deposit', amount))
                 conn.commit() #변경 사항 저장
                 print('Income was added!')
             elif i == 3: #이체기능
                 print('\nTransfer\nEnter card number:')
                 receiver_card = input() #돈을 보낼 카드번호를 입력받고 db에 receiver_card에 저장.
-                cur.execute(f'SELECT id, number,pin,balance FROM card WHERE number = {receiver_card};')
+                cur.execute("SELECT id, number,pin,balance FROM card WHERE number = ?;", (receiver_card,))
 
                 if not self.luhn_2(receiver_card): #룬2에서 반환받은 값이 false라면
                     print('Probably you made a mistake in the card number. Please try again!')
-
+                elif not cur.fetchone(): #카드번호 자체가 없을시
+                    print('Such a card does not exist')
                 else:
-                    #데이터베이스에서 수신자의 카드 조회
-                    cur.execute("SELECT id, number, pin, balance FROM card WHERE number = ?;", (receiver_card,))
-                    receiver_row = cur.fetchone()
-                    if not receiver_row:
-                        print('Such a card does not exist.')
-                    else:
-                        transfer = int(input("Enter how much money you want to transfer:\n")) #송금액 입력
-                        if transfer > self.balance:
-                            print("Not enough money!") #잔액이 부족할 경우
-                        else: #계좌에서 실제로 이체
-                            self.balance -= transfer #송금자의 잔액에서 이체 금액 차감
-                            cur.execute("UPDATE card SET balance = ? WHERE number = ?;", (self.balance, self.login_card))
+                    transfer = int(input("Enter how much money you want to transfer:\n")) #송금액 입력
+                    if transfer > self.balance:
+                        print("Not enough money!") #잔액이 부족할 경우
+                    else: #계좌에서 실제로 이체
+                        self.balance -= transfer #송금자의 잔액에서 이체 금액 차감
+                        cur.execute("UPDATE card SET balance = ? WHERE number = ?;", (self.balance, self.login_card))
 
-                            #수신자의 잔액 업데이트
-                            self.receiver_balance = receiver_row[3] + transfer #수금자 자산총액에서 송금액 추가. DB에 업데이트
-                            cur.execute("UPDATE card SET balance = ? WHERE number = ?;", (self.receiver_balance, receiver_card))
-                            conn.commit() #변경 사항 저장
-                            print("Success!")
+                        #수신자의 잔액 업데이트
+                        self.receiver_balance -= transfer #수금자 자산총액에서 송금액 추가. DB에 업데이트
+                        cur.execute("UPDATE card SET balance = ? WHERE number = ?;", (self.receiver_balance, receiver_card))
+
+                        # 트랜잭션 로그 기록 (송금자)
+                        cur.execute("INSERT INTO transactions (card_number, transaction_type, amount) VALUES (?, ?, ?);", 
+                                        (self.login_card, 'transfer_out', transfer))                            # 트랜잭션 로그 기록 (수신자)
+                        cur.execute("INSERT INTO transactions (card_number, transaction_type, amount) VALUES (?, ?, ?);", 
+                                        (receiver_card, 'transfer_in', transfer))
+                            
+                        conn.commit() #변경 사항 저장
+                        print("Success!")
             elif i == 4: #계좌 해지
                 cur.execute("DELETE FROM card WHERE number = ?", (self.login_card,)) #sql문으로 해당 카드와 관련된 DB내 모든 정보 삭제
                 conn.commit() #변경 사항 저장
@@ -189,12 +202,12 @@ class Card:
             elif i == 2:
                 self.log_in()
             elif i == 0:
-                conn.close()
+                conn.close() #데이터베이스 연결 종료
                 print("\nBye!")
                 break
             else:
                 print("Invalid input")
                 
-#instance 생성 후 menu 메소드 실행
+#Card instance 생성 후 menu 메소드 실행
 card = Card()
 card.menu()
