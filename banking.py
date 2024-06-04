@@ -384,6 +384,9 @@ class Card:
             if tfmoney > self.balance:
                 self.showerror('not_enough_money')
             else:
+                if tfmoney <= 0:
+                    self.showerror('invalid_input')
+                    return
                 self.balance -= tfmoney #송금자 자산총액에서 송금액 제외. DB에 업데이트
                 cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
                 self.receiver_balance += tfmoney #수금자 자산총액에서 송금액 추가. DB에 업데이트
