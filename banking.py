@@ -3,6 +3,7 @@ import sys
 import sqlite3
 import tkinter as tk
 from tkinter import messagebox
+
 random.seed()
 
 #sqlite3 DB
@@ -20,6 +21,7 @@ conn.commit() #DB에 결과 저장
 
 
 class Card:
+
 
     def __init__(self, root): #생성자 card의 instance attribute : card, pin, login_card, login_pin, row, balance, receiver_balance 값 초기화
         self.root = root
@@ -228,6 +230,7 @@ class Card:
         label_account.grid(row=3, column=1, pady=2)
         label_pin.grid(row=4, column=1, pady=3)
         
+
     def create_account(self):
         # 랜덤한 카드 번호 생성
         self.card = '400000' + str(random.randint(100000000, 999999999))
@@ -238,7 +241,7 @@ class Card:
         self.show_account(new_account, self.pin)
         
         # 생성된 계정 정보를 데이터베이스에 삽입
-        cur.execute(f"INSERT INTO card (number, pin) VALUES (?, ?)", (self.card, self.pin)) # DB에 카드, pin 정보 추가
+        cur.execute("INSERT INTO card (number, pin) VALUES (?, ?);", (self.card, self.pin)) # DB에 카드, pin 정보 추가
         conn.commit() # 저장
         
     def log_in(self): #카드번호와 PIN을 받아서 sql문으로 검색, 검색된 경우 sucess문으로 넘어감 
@@ -270,8 +273,7 @@ class Card:
                 sys.exit()
             messagebox.showerror(self.translate('error'),f"{self.translate('login_failure')} {5-self.login_attempts} {self.translate('login_attempts')}") #로그인 실패시 남은 시도 횟수 출력
             return
-        
-        cur.execute(f"""SELECT
+         cur.execute("SELECT
                             id,
                             number,
                             pin,
@@ -279,9 +281,11 @@ class Card:
                         FROM 
                             card
                         WHERE
-                            number = {self.login_card}
-                            AND pin = {self.login_pin}
-                        ;""") #입력받은 정보를 통해 sql문으로 db조회
+                            number = ?
+                            AND pin = ?
+                        ;",(self.login_card,self.login_pin)) #입력받은 정보를 통해 sql문으로 db조회
+        
+        
         
         self.row = cur.fetchone() #만약 cur에 입력받은게 있으면 그 값을 가져오고, 없다면 NULL을 가져옴
         #login_win.destroy() #디버깅용 코드. 아랫줄도
@@ -341,7 +345,7 @@ class Card:
                 self.showerror('invalid_input')
                 return
             self.balance += income
-            cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
+            cur.execute('UPDATE card SET balance = ? WHERE number = ?;',(self.balance,self.login_card))
             conn.commit() #DB저장
             messagebox.showinfo(self.translate('info'),f"{self.translate('income_added')} : {self.balance}")
             #self.balance_label.config(text=f"Balance: {self.balance}")
@@ -361,7 +365,7 @@ class Card:
     def transfermethod(self,myaccount,receivecard):
         try :
             self.receiver_card = str(receivecard.get())
-            cur.execute(f'SELECT id, number,pin,balance FROM card WHERE number = {self.receiver_card};')
+            cur.execute('SELECT id, number,pin,balance FROM card WHERE number = ?;',(self.receiver_card))
             if not self.luhn_2(self.receiver_card): #룬2에서 반환받은 값이 false라면
                 self.showerror('mistake_card_number')
             elif not cur.fetchone(): #카드번호 자체가 없을시
@@ -388,10 +392,10 @@ class Card:
                     self.showerror('invalid_input')
                     return
                 self.balance -= tfmoney #송금자 자산총액에서 송금액 제외. DB에 업데이트
-                cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
+                cur.execute('UPDATE card SET balance = ? WHERE number = ?;',(self.balance,self.login_card))
                 self.receiver_balance += tfmoney #수금자 자산총액에서 송금액 추가. DB에 업데이트
-                cur.execute(f'UPDATE card SET balance = {self.receiver_balance} WHERE number = {self.receiver_card};')
-                cur.execute(f'SELECT * FROM card WHERE number = {self.login_card}') #송금자 카드번호를 기반으로 DB내 모든 정보 조회
+                cur.execute('UPDATE card SET balance = ? WHERE number = ?;',(self.receiver_balance,self.receiver_card))
+                cur.execute('SELECT * FROM card WHERE number = ?;',(self.login_card)) #송금자 카드번호를 기반으로 DB내 모든 정보 조회
                 messagebox.showinfo(self.translate('info'),f"{self.translate('transfer_success')} : {self.balance}")
                 conn.commit()
         except ValueError:
@@ -408,7 +412,7 @@ class Card:
         tk.Button(closewin,text=self.translate('yes'),command=lambda:self.deleteaccount(myaccount),width=10,height=2).pack(side = "bottom",pady=10)
 
     def deleteaccount(self,myaccount):
-        cur.execute(f"DELETE FROM card WHERE number = {self.login_card}") #sql문으로 해당 카드와 관련된 DB내 모든 정보 삭제
+        cur.execute("DELETE FROM card WHERE number = ?;",(self.login_card)) #sql문으로 해당 카드와 관련된 DB내 모든 정보 삭제
         conn.commit()
         messagebox.showinfo(self.translate('info'),self.translate('account_closed')) #계좌 폐쇄 성공 메시지 출력
         self.logout(myaccount)
@@ -428,6 +432,7 @@ class Card:
         # 초기 화면으로 돌아가기
         myaccount.destroy()
     
+
     # 룬2 : 카드번호의 유효성. 이 검사를 통과할 시 true, 못하면 false
     def luhn_2(self, num): #Luhn 알고리즘을 사용해 카드번호가 유효한지 판단
         num2 = num[:]
@@ -478,6 +483,7 @@ class Card:
 
     def admin_menu(self): #관리자 기능 메소드 1.전체 계좌 목록 조회 2.특정 계좌 삭제 0.관리자 기능 종료
         
+
         self.admin_password = 1000 #비밀번호는 1000
         adminlogin = tk.Toplevel(root)
         adminlogin.title(self.translate('admin_login_title'))
@@ -561,6 +567,7 @@ class Card:
         if not self.login_card.isdigit() or not self.login_pin.isdigit(): # 입력값이 숫자인지 확인
                 self.showerror('invalid_input')
                 return
+
 
 #instance 생성 후 menu 메소드 실행
 
