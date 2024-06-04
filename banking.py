@@ -355,6 +355,7 @@ class Card:
             elif self.receiver_card == self.login_card: # 본인 계좌로 송금하려할시
                 messagebox.showerror(self.translate('error'), self.translate('mistake_card_number'))
             else:
+                messagebox.showinfo(self.translate('info'), self.translate('enter_transfer_amount'))
                 tfwin = tk.Toplevel(myaccount)
                 tfwin.geometry("700x150")
                 tfwin.grab_set()
