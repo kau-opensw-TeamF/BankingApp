@@ -355,7 +355,7 @@ class Card:
     def transfermethod(self,myaccount,receivecard):
         try :
             self.receiver_card = str(receivecard.get())
-            cur.execute('SELECT id, number,pin,balance FROM card WHERE number = ?;',(self.receiver_card))
+            cur.execute('SELECT id, number,pin,balance FROM card WHERE number = ?;',(self.receiver_card,))
             if not self.luhn_2(self.receiver_card): #룬2에서 반환받은 값이 false라면
                 self.showerror('mistake_card_number')
             elif not cur.fetchone(): #카드번호 자체가 없을시
@@ -385,7 +385,7 @@ class Card:
                 cur.execute('UPDATE card SET balance = ? WHERE number = ?;',(self.balance,self.login_card))
                 self.receiver_balance += tfmoney #수금자 자산총액에서 송금액 추가. DB에 업데이트
                 cur.execute('UPDATE card SET balance = ? WHERE number = ?;',(self.receiver_balance,self.receiver_card))
-                cur.execute('SELECT * FROM card WHERE number = ?;',(self.login_card)) #송금자 카드번호를 기반으로 DB내 모든 정보 조회
+                cur.execute('SELECT * FROM card WHERE number = ?;',(self.login_card,)) #송금자 카드번호를 기반으로 DB내 모든 정보 조회
                 messagebox.showinfo(self.translate('info'),f"{self.translate('transfer_success')} : {self.balance}")
                 conn.commit()
 
@@ -403,7 +403,7 @@ class Card:
         tk.Button(closewin,text=self.translate('yes'),command=lambda:self.deleteaccount(myaccount),width=10,height=2).pack(side = "bottom",pady=10)
 
     def deleteaccount(self,myaccount):
-        cur.execute("DELETE FROM card WHERE number = ?;",(self.login_card)) #sql문으로 해당 카드와 관련된 DB내 모든 정보 삭제
+        cur.execute("DELETE FROM card WHERE number = ?;",(self.login_card,)) #sql문으로 해당 카드와 관련된 DB내 모든 정보 삭제
         conn.commit()
         messagebox.showinfo(self.translate('info'),self.translate('account_closed')) #계좌 폐쇄 성공 메시지 출력
         self.logout(myaccount)
