@@ -125,12 +125,12 @@ class Card:
                 'enter_pin': "핀 번호를 입력하세요 :",
                 'login_success': "성공적으로 로그인했습니다.",
                 'login_failure': "카드 번호 또는 핀 번호가 잘못되었습니다.",
-                'login_attempts':"남은 시도 횟수",
+                'login_attempts':"번 남았습니다.",
                 'out_of_login': "너무 많은 로그인 시도. 프로그램을 종료합니다.",
                 'MyAccount' : "내 계좌",
                 'balance': "잔액",
                 'enter_income': "수입 입력하기",
-                'income_added': "수입이 추가되었습니다! 당신의 잔액 :",
+                'income_added': "수입이 추가되었습니다! 당신의 잔액 ",
                 'transferbtn': "이체",
                 'transfermsg' : "이체할 카드 번호를 입력하세요: ",
                 'mistake_card_number': "카드 번호가 잘못되었습니다. 다시 시도하세요!",
@@ -170,7 +170,9 @@ class Card:
        
         self.main_window()
         
-       
+    def showerror(self,message):
+        messagebox.showerror(self.translate('error'), self.translate(message))
+    
     def translate(self, message):
         return self.messages[self.language][message]
     #en기본언어 ko변경 감지시 switch
@@ -260,6 +262,15 @@ class Card:
     def check_login(self,login_win):
         self.login_card = self.card_input.get()
         self.login_pin = self.pin_input.get()
+         # 입력 값이 숫자인지 확인
+        if not self.login_card.isdigit() or not self.login_pin.isdigit():
+            self.login_attempts += 1
+            if (self.login_attempts >= 5): #로그인 실패 횟수가 5번이 넘어가면 종료, 악의적 로그인 시도의 차단.
+                self.showerror('out_of_login')
+                sys.exit()
+            messagebox.showerror(self.translate('error'),f"{self.translate('login_failure')} {5-self.login_attempts} {self.translate('login_attempts')}") #로그인 실패시 남은 시도 횟수 출력
+            return
+        
         cur.execute(f"""SELECT
                             id,
                             number,
@@ -286,9 +297,10 @@ class Card:
             #print("wrong card number or pin")
             self.login_attempts += 1
             if (self.login_attempts >= 5): #로그인 실패 횟수가 5번이 넘어가면 종료, 악의적 로그인 시도의 차단.
-                messagebox.showerror(self.translate('error'),self.translate('out_of_login'))
+                self.showerror('out_of_login')
                 sys.exit()
             messagebox.showerror(self.translate('error'),f"{self.translate('login_failure')} {5-self.login_attempts} {self.translate('login_attempts')}") #로그인 실패시 남은 시도 횟수 출력
+        
         '''elif not self.luhn_2(self.login_card):
                 print('Probably you made a mistake in the card number. Please try again!') '''
             
@@ -332,7 +344,7 @@ class Card:
             #self.balance_label.config(text=f"Balance: {self.balance}")
             self.mybalance(myaccount)
         except ValueError:
-            messagebox.showerror(self.translate('error'), self.translate('invalid_input'))
+            self.showerror('invalid_input')
         #tk.Button(myaccount,text="addincome",command=lambda:self.mybalance(myaccount)).pack(5)
         
         
@@ -344,30 +356,30 @@ class Card:
             receivecard.grid(row=20,column=10)
             tk.Button(myaccount,text=self.translate('enter'),command=lambda:self.transfermethod(myaccount,receivecard)).grid(row=22,column=10)
     def transfermethod(self,myaccount,receivecard):
-        try:
+        try :
             self.receiver_card = str(receivecard.get())
             cur.execute(f'SELECT id, number,pin,balance FROM card WHERE number = {self.receiver_card};')
             if not self.luhn_2(self.receiver_card): #룬2에서 반환받은 값이 false라면
-                messagebox.showerror(self.translate('error'),self.translate('mistake_card_number'))
+                self.showerror('mistake_card_number')
             elif not cur.fetchone(): #카드번호 자체가 없을시
-                messagebox.showerror(self.translate('error'),self.translate('no_card'))
+                self.showerror('no_card')
             else:
                 tfwin = tk.Toplevel(myaccount)
                 tfwin.geometry("700x150")
                 tfwin.grab_set()
                 #myaccount.wait_window()
                 #self.root.wait_window()
-                label = tk.Label(tfwin,text=self.translate('enter_transfer_money')).pack()
+                label = tk.Label(tfwin,text=self.translate('enter_transfer_amount')).pack()
                 tfmoney = tk.Entry(tfwin,width=20)
                 tfmoney.pack(pady=10)
                 tk.Button(tfwin,text=self.translate('enter'),command=lambda:self.tfmoneycheck(tfmoney)).pack()
-        except ValueError:
-            messagebox.showerror(self.translate('error'),self.translate('invalid_input'))
+        except:
+            self.showerror('invalid_input')
     def tfmoneycheck(self,tfmoney):
         try:
             tfmoney = int(tfmoney.get())
             if tfmoney > self.balance:
-                messagebox.showerror(self.translate('error'),self.translate('not_enough_money'))
+                self.showerror('not_enough_money')
             else:
                 self.balance -= tfmoney #송금자 자산총액에서 송금액 제외. DB에 업데이트
                 cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
@@ -377,7 +389,7 @@ class Card:
                 messagebox.showinfo(self.translate('info'),f"{self.translate('transfer_success')} : {self.balance}")
                 conn.commit()
         except ValueError:
-            messagebox.showerror(self.translate('error'),self.translate('invalid_input'))
+            self.showerror('invalid_input')
 
     def closeaccount(self,myaccount):
         closewin = tk.Toplevel(myaccount)
@@ -388,7 +400,7 @@ class Card:
         label = tk.Label(closewin,text=self.translate('clsaccountmsg'))
         label.pack()
         tk.Button(closewin,text=self.translate('yes'),command=lambda:self.deleteaccount(myaccount),width=10,height=2).pack(side = "bottom",pady=10)
-        tk.Button(closewin,text=self.translate('no'),command=closewin.destroy,width=10,height=2).pack(side = "bottom",pady=10)
+
     def deleteaccount(self,myaccount):
         cur.execute(f"DELETE FROM card WHERE number = {self.login_card}") #sql문으로 해당 카드와 관련된 DB내 모든 정보 삭제
         conn.commit()
@@ -476,7 +488,11 @@ class Card:
         
     def check_admin(self,adminlogin, input_password):
         try:
-            input_password = int(input_password.get())
+            input_password = input_password.get()
+            if not input_password.isdigit():
+                self.showerror('invalid_input')
+                return
+            input_password = int(input_password)
             if self.admin_password == input_password:
                 adminwin = tk.Tk()
                 adminwin.title(self.translate('admin_menu_title'))
@@ -484,14 +500,14 @@ class Card:
                 adminwin.resizable(width=False, height=False)
                 #admin 기능 버튼 추가
                 tk.Button(adminwin,text=self.translate('admin_viewallaccounts'),command=lambda:self.showallacounts(adminwin)).grid(row=5,column=10,padx = 40,pady=20)
-                tk.Button(adminwin,text=self.translate('admin_deleteaccount'),command=lambda:self.deleteaccountcheck(adminwin)).grid(row=10,column=10,padx = 40,pady=20)
+                tk.Button(adminwin,text=self.translate('admin_deleteaccount'),command=lambda:self.admin_deleteaccountcheck(adminwin)).grid(row=10,column=10,padx = 40,pady=20)
                 tk.Button(adminwin,text=self.translate('admin_exit'),command=lambda:adminwin.destroy()).grid(row=15,column=10,padx = 40,pady=20)
 
                 adminlogin.destroy()
             else:
-                messagebox.showerror(self.translate('error'),self.translate('admin_login_error'))
+                self.showerror('admin_login_error')
         except ValueError:
-            messagebox.showerror(self.translate('error'),self.translate('invalid_input'))
+            self.showerrorq('invalid_input')
         
     def showallacounts(self,adminwin):
         #전체 계좌 목록 조회. 
@@ -509,7 +525,7 @@ class Card:
             #tk.Label(allaccounts,text=f"{self.translate('id')}: {account[0]},{self.translate('number')}: {account[1]},{self.translate('pin')}: {account[2]},{self.translate('balance')} : {account[3]}").pack(pady=5)
             #print(f"ID: {account[0]}, Number: {account[1]}, PIN: {account[2]}, Balance: {account[3]}")
     
-    def deleteaccountcheck(self,adminwin):
+    def admin_deleteaccountcheck(self,adminwin):
         #특정 계정 삭제 
         delaccwin = tk.Toplevel(adminwin)
         delaccwin.title(self.translate('del_account_title'))
@@ -519,73 +535,26 @@ class Card:
         tk.Label(delaccwin, text=self.translate('del_account_msg')).pack(pady=5)
         delaccount = tk.Entry(delaccwin, width=20)
         delaccount.pack(pady=5)
-        tk.Button(delaccwin, text=self.translate('delete'), command=lambda:self.deleteaccount(delaccount,delaccwin),width=5).pack(pady=10)
-    def deleteaccount(self,delaccount,delaccwin):
+        tk.Button(delaccwin, text=self.translate('delete'), command=lambda:self.admin_deleteaccount(delaccount,delaccwin),width=5).pack(pady=10)
+    def admin_deleteaccount(self,delaccount,delaccwin):
         try:
             delete_card = delaccount.get()
+
             cur.execute("SELECT * FROM card WHERE number = ?;",(delete_card,))
             if cur.fetchone():
-                delaccwin.destroy()
                 cur.execute("DELETE FROM card WHERE number = ?;",(delete_card,))
                 conn.commit()
                 messagebox.showinfo(self.translate('info'),self.translate('account_closed'))
+                delaccwin.destroy()
             else:
-                messagebox.showerror(self.translate('error'),self.translate('no_card'))
+                self.showerror('no_card')
         except ValueError:
-            messagebox.showerror(self.translate('error'),self.translate('invalid_input'))
+            self.showerror('invalid_input')
      
-            '''     while (admin_password == input_password): 
-            print("""\nAdmin Menu
-1. View all accounts
-2. Delete an account
-0. Back to main menu""")
-            i = int(input())
-            if i == 1:  # 전체 계좌 목록 조회
-                cur.execute("SELECT id, number, pin, balance FROM card;")
-                accounts = cur.fetchall()
-                print("\nAll Accounts:")
-                for account in accounts:
-                    print(f"ID: {account[0]}, Number: {account[1]}, PIN: {account[2]}, Balance: {account[3]}")
-            elif i == 2:  # 특정 계정 삭제
-                print('\nEnter card number to delete:')
-                delete_card = input()
-                cur.execute("SELECT * FROM card WHERE number = ?;",(delete_card))
-                if cur.fetchone():
-                    cur.execute("DELETE FROM card WHERE number = ?;",(delete_card))
-                    conn.commit()
-                    print("The account has been deleted!")
-                else:
-                    print("Such a card does not exist.")
-            elif i == 0: # 관리자 기능 종료
-                break
-            else:
-                print(self.translate('invalid_input'))'''
-       
-
-
-    def menu(self): #메뉴 표시 메소드 1.계좌생성 2.로그인 9.영한변환 0.종료
-        while True:
-            print(self.translate('welcome'))
-
-            i = int(input())
-            if i == 1:
-                self.create_account()
-            elif i == 2:
-                self.log_in()
-
-            elif i == 3:
-                self.admin_menu()
-
-            elif i == 9:
-                self.switch_language()
-
-            elif i == 0:
-                conn.close()
-                print(self.translate('bye'))
-                break
-            else:
-                print(self.translate('invalid_input'))
-                
+    def checklogdigit(self):
+        if not self.login_card.isdigit() or not self.login_pin.isdigit(): # 입력값이 숫자인지 확인
+                self.showerror('invalid_input')
+                return
 
 #instance 생성 후 menu 메소드 실행
 
