@@ -337,6 +337,9 @@ class Card:
     def addmethod(self,myaccount,add):       
         try:
             income = int(add.get())
+            if income <= 0: #음수 체크
+                self.showerror('invalid_input')
+                return
             self.balance += income
             cur.execute(f'UPDATE card SET balance = {self.balance} WHERE number = {self.login_card};')
             conn.commit() #DB저장
