@@ -269,7 +269,7 @@ class Card:
         if not self.login_card.isdigit() or not self.login_pin.isdigit():
             self.login_attempts += 1
             if (self.login_attempts >= 5): #로그인 실패 횟수가 5번이 넘어가면 종료, 악의적 로그인 시도의 차단.
-                self.showerror('out_of_login')
+                self.showerror(self.translate('out_of_login'))
                 sys.exit()
             messagebox.showerror(self.translate('error'),f"{self.translate('login_failure')} {5-self.login_attempts} {self.translate('login_attempts')}") #로그인 실패시 남은 시도 횟수 출력
             return
@@ -291,7 +291,7 @@ class Card:
             #print("wrong card number or pin")
             self.login_attempts += 1
             if (self.login_attempts >= 5): #로그인 실패 횟수가 5번이 넘어가면 종료, 악의적 로그인 시도의 차단.
-                self.showerror('out_of_login')
+                self.showerror(self.translate('out_of_login'))
                 sys.exit()
             messagebox.showerror(self.translate('error'),f"{self.translate('login_failure')} {5-self.login_attempts} {self.translate('login_attempts')}") #로그인 실패시 남은 시도 횟수 출력
         
@@ -332,7 +332,7 @@ class Card:
         try:
             income = int(add.get())
             if income <= 0: #음수 체크
-                self.showerror('invalid_input')
+                self.showerror(self.translate('invalid_input'))
                 return
             self.balance += income
             cur.execute('UPDATE card SET balance = ? WHERE number = ?;',(self.balance,self.login_card))
@@ -341,7 +341,7 @@ class Card:
             #self.balance_label.config(text=f"Balance: {self.balance}")
             self.mybalance(myaccount)
         except ValueError:
-            self.showerror('invalid_input')
+            self.showerror(self.translate('invalid_input'))
         #tk.Button(myaccount,text="addincome",command=lambda:self.mybalance(myaccount)).pack(5)
         
         
@@ -355,11 +355,13 @@ class Card:
     def transfermethod(self,myaccount,receivecard):
         try :
             self.receiver_card = str(receivecard.get())
+            if self.receiver_card == self.login_card: # 본인 계좌로 송금시 에러
+                self.showerror(self.translate('mistake_card_number'))
             cur.execute('SELECT id, number,pin,balance FROM card WHERE number = ?;',(self.receiver_card,))
             if not self.luhn_2(self.receiver_card): #룬2에서 반환받은 값이 false라면
-                self.showerror('mistake_card_number')
+                self.showerror(self.translate('mistake_card_number'))
             elif not cur.fetchone(): #카드번호 자체가 없을시
-                self.showerror('no_card')
+                self.showerror(self.translate('no_card'))
             else:
                 tfwin = tk.Toplevel(myaccount)
                 tfwin.geometry("700x150")
@@ -371,15 +373,15 @@ class Card:
                 tfmoney.pack(pady=10)
                 tk.Button(tfwin,text=self.translate('enter'),command=lambda:self.tfmoneycheck(tfmoney)).pack()
         except:
-            self.showerror('invalid_input')
+            self.showerror(self.translate('invalid_input'))
     def tfmoneycheck(self,tfmoney):
         try:
             tfmoney = int(tfmoney.get())
             if tfmoney > self.balance:
-                self.showerror('not_enough_money')
+                self.showerror(self.translate('not_enough_money'))
             else:
                 if tfmoney <= 0:
-                    self.showerror('invalid_input')
+                    self.showerror(self.translate('invalid_input'))
                     return
                 self.balance -= tfmoney #송금자 자산총액에서 송금액 제외. DB에 업데이트
                 cur.execute('UPDATE card SET balance = ? WHERE number = ?;',(self.balance,self.login_card))
@@ -390,7 +392,7 @@ class Card:
                 conn.commit()
 
         except ValueError:
-            self.showerror('invalid_input')
+            self.showerror(self.translate('invalid_input'))
 
     def closeaccount(self,myaccount):
         closewin = tk.Toplevel(myaccount)
@@ -493,7 +495,7 @@ class Card:
         try:
             input_password = input_password.get()
             if not input_password.isdigit():
-                self.showerror('invalid_input')
+                self.showerror(self.translate('invalid_input'))
                 return
             input_password = int(input_password)
             if self.admin_password == input_password:
@@ -508,9 +510,9 @@ class Card:
 
                 adminlogin.destroy()
             else:
-                self.showerror('admin_login_error')
+                self.showerror(self.translate('admin_login_error'))
         except ValueError:
-            self.showerrorq('invalid_input')
+            self.showerrorq(self.translate('invalid_input'))
         
     def showallacounts(self,adminwin):
         #전체 계좌 목록 조회. 
@@ -550,13 +552,13 @@ class Card:
                 messagebox.showinfo(self.translate('info'),self.translate('account_closed'))
                 delaccwin.destroy()
             else:
-                self.showerror('no_card')
+                self.showerror(self.translate('no_card'))
         except ValueError:
-            self.showerror('invalid_input')
+            self.showerror(self.translate('invalid_input'))
      
     def checklogdigit(self):
         if not self.login_card.isdigit() or not self.login_pin.isdigit(): # 입력값이 숫자인지 확인
-                self.showerror('invalid_input')
+                self.showerror(self.translate('invalid_input'))
                 return
 
 
