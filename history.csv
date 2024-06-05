@@ -1,0 +1,30 @@
+hankyeol,2024-06-04 20:31:58,-modified : 계좌 출금 시, 음수를 출력할 수 있던 오류 수정
+hankyeol,2024-06-04 20:29:50,-modified : add income 메소드에서, 음수가 입력되던 오류 수정.
+hankyeol,2024-06-04 20:26:47,modified : 숫자가 아닌 값을 입력받을 경우 에러 표시
+hankyeol,2024-06-04 18:01:41,feat: 번역 기능 추가
+hankyeol,2024-06-04 06:22:38,1. 문자열 자료구조 관리 2. 언어를 바꾸는 버튼 배치
+hankyeol,2024-06-04 06:05:44,empty commit about card.s3db
+hankyeol,2024-06-04 06:00:25,-main에서 pull 한 코드병합 후 수정 -gui : admin 구현
+hankyeol,2024-06-04 01:57:40,pull changed code from main
+KimChaeWon12,2024-06-03 23:36:49,주석 보안
+KimChaeWon12,2024-06-03 23:10:59,97번줄 수정 및 트랜잭션 추가
+WooHyunLEE,2024-06-03 23:09:53,Merge pull request #1 from kau-opensw-TeamF/sangcheon
+WooHyunLEE,2024-06-03 23:09:40,Merge branch 'main' into sangcheon
+use030,2024-06-03 22:53:20,Merge pull request #3 from kau-opensw-TeamF/taejoon
+hankyeol,2024-06-03 21:06:39,-변경된 db 수정.
+hankyeol,2024-06-03 20:57:50,-팝업 창을 열면, 부모 객체 창을 조작할 수 있어서 다른 메소드가 제대로실행되지 않는 오류를 수정. -logout이 아닌 창을 닫으면 제대로 변수를 초기화하지 않아서 오류가 생기는 문제를 해결(창을 닫을시, logout 메소드가 실행되도록 수정)
+Silence013,2024-06-03 20:31:44,cln-문자열 가독성 정리
+hankyeol,2024-06-03 20:08:40,-로그아웃 후 다시 로그인 시 오류가 나는 문제를 해결.
+hankyeol,2024-06-03 14:26:51,-close account(계좌 삭제) 기능 구현 	-버튼을 누르면 새 창이 열리고, 한번 확인한 후 yes를 누르면 	계좌 삭제 후 창이 닫힘 -log out, exit 기능 구현 	exit를 누르면 프로그램이 종료되고, log out은 my account 창이 	닫힘.
+KimChaeWon12,2024-06-03 13:00:35,코드 유지보수를 위한 주석처리 및 입출금 및 이체 등 db기록처리 개선
+hankyeol,2024-06-03 05:16:12,-do transfer 화면 구현. -옮길 계좌번호를 입력하는데 성공하면 새 팝업창에서 얼마나 옮길 건지 나옴. -아직 중복 체크 등의 구현은 하지 않았음.
+hankyeol,2024-06-03 02:27:54,-log in에 성공하면, 계좌 balance, add income 기능 추가. - 중복해서 버튼과 레이블이 나오는 코드 수정.
+Silence013,2024-06-02 20:36:52,Add switch langauge function
+use030,2024-06-02 19:50:07,로그인 함수 개선-5번 로그인 실패시 프로그램 종료
+use030,2024-06-02 18:46:20,관리자 기능 추가
+hankyeol,2024-06-02 17:04:12,commit - log in GUI -'log in' 버튼 누를 시, 새 창에 계좌번호와 pin번호를 입력할 수 있는 새 창
+hankyeol,2024-06-02 15:55:29,tkinter GUI  화면 구성 -gui 화면을 method __init__ 안에 넣음. -create_account를 누르면 바로 계좌와 pin 번호가 나오도록. -현재는 여기까지만 구현함.
+hankyeol,2024-06-02 14:46:01,첫 커밋. (전 파일을 날려먹고, 저장소를 모든 파일이 있는 옜 버전으로 사용해서 다시 커밋합니다)
+Silence013,2024-06-01 22:37:49,tst-작업에 앞서 print문 내 텍스트를 메소드로 분리
+wooandrich,2024-05-30 19:18:21,feat/로그인 이후 0~5사이의 숫자가 주어지지않을경우 예외처리기능구현
+wooandrich,2024-05-06 13:56:56,first commit
