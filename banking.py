@@ -18,6 +18,14 @@ CREATE TABLE IF NOT EXISTS card(
     number TEXT,
     pin TEXT,balance INTEGER DEFAULT 0
     );""")
+
+# transactions 테이블이 존재하지 않는 경우 생성
+cur.execute("""CREATE TABLE IF NOT EXISTS transactions(
+                id INTEGER PRIMARY KEY,
+                card_number TEXT,
+                transaction_type TEXT,
+                amount INTEGER,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP);""")
 conn.commit() #DB에 결과 저장
 
 
@@ -327,6 +335,8 @@ class Card:
                 return
             self.balance += income
             cur.execute('UPDATE card SET balance = ? WHERE number = ?;',(self.balance,self.login_card))
+            # 트랜잭션 로그 기록
+            cur.execute("INSERT INTO transactions (card_number, transaction_type, amount) VALUES (?, ?, ?);",(self.login_card, 'deposit', income))
             conn.commit() #DB저장
             messagebox.showinfo(self.translate('info'),f"{self.translate('income_added')} : {self.balance}")
             #self.balance_label.config(text=f"Balance: {self.balance}")
@@ -378,8 +388,12 @@ class Card:
                     return
                 self.balance -= tfmoney #송금자 자산총액에서 송금액 제외. DB에 업데이트
                 cur.execute('UPDATE card SET balance = ? WHERE number = ?;',(self.balance,self.login_card))
+                # 트랜잭션 로그 기록 (송금자)
+                cur.execute("INSERT INTO transactions (card_number, transaction_type, amount) VALUES (?, ?, ?);",(self.login_card, 'transfer_out', self.receiver_card))
                 self.receiver_balance += tfmoney #수금자 자산총액에서 송금액 추가. DB에 업데이트
                 cur.execute('UPDATE card SET balance = ? WHERE number = ?;',(self.receiver_balance,self.receiver_card))
+                # 트랜잭션 로그 기록 (수신자)
+                cur.execute("INSERT INTO transactions (card_number, transaction_type, amount) VALUES (?, ?, ?);",(self.receiver_card, 'transfer_in', self.login_card))
                 cur.execute('SELECT * FROM card WHERE number = ?;',(self.login_card,)) #송금자 카드번호를 기반으로 DB내 모든 정보 조회
                 messagebox.showinfo(self.translate('info'),f"{self.translate('transfer_success')} : {self.balance}")
                 conn.commit()
